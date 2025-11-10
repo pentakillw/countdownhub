@@ -1,0 +1,12 @@
+/* Importa las utilidades de Tailwind */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Estilos base para la aplicación */
+body {
+  @apply bg-brand-dark text-brand-light; /* Fondo oscuro y texto claro por defecto */
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
