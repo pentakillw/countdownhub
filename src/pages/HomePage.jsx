@@ -1,77 +1,81 @@
 import React, { useState, useEffect } from 'react';
-// 1. Importamos nuestro componente de tarjeta
-import CountdownCard from '/src/components/CountdownCard.jsx';
-// 2. Importamos nuestro cliente de Supabase
+// ¡CORRECCIÓN! Usamos rutas absolutas desde /src/ para evitar errores.
 import { supabase } from '/src/supabaseClient.js';
+import CountdownCard from '/src/components/CountdownCard.jsx';
 
-// Esta es la página de Inicio (HomePage)
 function HomePage() {
-  // 3. Creamos estados para guardar los items y saber si estamos cargando
-  const [items, setItems] = useState([]);
+  const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // 4. Usamos useEffect para pedir los datos CUANDO el componente se monta
   useEffect(() => {
-    // 5. Creamos una función asíncrona para pedir los datos
-    async function getItems() {
-      try {
-        setLoading(true);
-        
-        // 6. ¡Esta es la petición a Supabase!
-        // Pedimos todos los items de la tabla 'events'
-        const { data, error } = await supabase
-          .from('events') // <-- El nombre de nuestra tabla
-          .select('*');   // <-- Pedimos todas las columnas
+    async function getEvents() {
+      setLoading(true);
+      setError(null);
+      
+      // 1. Obtenemos la fecha de "hoy"
+      const today = new Date().toISOString();
 
-        if (error) {
-          // Si Supabase nos da un error, lo guardamos
-          console.error('Error al cargar datos:', error);
-          setError(error.message);
-        } else {
-          // Si todo sale bien, guardamos los datos en el estado
-          setItems(data);
-        }
-      } catch (err) {
-        // Si hay un error de código, lo guardamos
-        console.error('Error en la función getItems:', err);
-        setError(err.message);
-      } finally {
-        // Al final (con error o sin él), dejamos de cargar
-        setLoading(false);
+      // 2. Pedimos a Supabase TODOS los eventos futuros
+      const { data, error: fetchError } = await supabase
+        .from('events')
+        .select('*')
+        .gte('release_date', today) // Filtra los que ya pasaron
+        .order('release_date', { ascending: true }); // Ordena por fecha
+        // ¡YA NO ESTÁ EL .limit(30)!
+
+      if (fetchError) {
+        console.error('Error al cargar los eventos:', fetchError);
+        setError('No se pudieron cargar los estrenos. Intenta más tarde.');
+      } else {
+        setEvents(data);
       }
+      setLoading(false);
     }
 
-    // 7. Llamamos a la función que acabamos de crear
-    getItems();
-  }, []); // El array vacío [] asegura que esto solo se ejecuta 1 vez
+    getEvents();
+  }, []);
 
-  // --- Renderizado del componente ---
+  // --- Renderizado ---
 
-  // 8. Mostramos un mensaje de carga
   if (loading) {
-    return <p className="text-center text-brand-light text-lg">Cargando próximos estrenos...</p>;
+    return (
+      <div>
+        <h1 className="text-4xl font-bold text-brand-light mb-8">
+          Próximos Estrenos
+        </h1>
+        <p className="text-lg text-brand-light">Cargando...</p>
+      </div>
+    );
   }
 
-  // 9. Mostramos un mensaje de error si algo salió mal
   if (error) {
-    return <p className="text-center text-red-400 text-lg">Error al cargar datos: {error}</p>;
+    return (
+      <div>
+        <h1 className="text-4xl font-bold text-brand-light mb-8">
+          Próximos Estrenos
+        </h1>
+        <p className="text-lg text-red-400">{error}</p>
+      </div>
+    );
   }
 
-  // 10. Mostramos las tarjetas si todo salió bien
   return (
     <div>
       <h1 className="text-4xl font-bold text-brand-light mb-8">
         Próximos Estrenos
       </h1>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        
-        {/* 11. Hacemos el .map() sobre 'items' (del estado) en lugar de 'mockData' */}
-        {items.map((item) => (
-          <CountdownCard key={item.id} item={item} />
-        ))}
-        
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {events.length > 0 ? (
+          events.map((event) => (
+            <CountdownCard key={event.id} item={event} />
+          ))
+        ) : (
+          <p className="text-lg text-brand-light col-span-full">
+            No hay próximos estrenos programados. ¡Vuelve pronto!
+          </p>
+        )}
       </div>
     </div>
   );

@@ -1,55 +1,61 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-// 1. Importamos los componentes de enrutamiento
-import {
-  createBrowserRouter,
-  RouterProvider,
-} from "react-router-dom";
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 
-import App from './App.jsx'; // Usamos ruta relativa
-import './index.css'; // Usamos ruta relativa
+// Importamos los CSS
+import './index.css';
 
-// 2. Importamos nuestras nuevas páginas
-import HomePage from './pages/HomePage.jsx';
-import MoviesPage from './pages/MoviesPage.jsx';
-import SeriesPage from './pages/SeriesPage.jsx';
-import SportsPage from './pages/SportsPage.jsx';
-import GamesPage from './pages/GamesPage.jsx';
+// Importamos el Layout Principal
+import App from './App.jsx';
 
-// 3. Creamos el enrutador (router) - El "mapa" que faltaba
+// Importamos todas nuestras páginas
+// ¡Usamos rutas absolutas desde /src/ para evitar errores!
+import HomePage from '/src/pages/HomePage.jsx';
+import MoviesPage from '/src/pages/MoviesPage.jsx';
+import SeriesPage from '/src/pages/SeriesPage.jsx';
+import SportsPage from '/src/pages/SportsPage.jsx';
+import GamesPage from '/src/pages/GamesPage.jsx';
+import DetailPage from '/src/pages/DetailPage.jsx'; // <-- ¡NUEVA PÁGINA!
+
+// Este es el "mapa" de nuestro sitio
 const router = createBrowserRouter([
   {
-    path: "/", // La ruta raíz
-    element: <App />, // Usará nuestro Layout (Header/Footer)
-    // 'children' son las páginas que se cargarán DENTRO de <App> (en el Outlet)
+    path: '/',
+    element: <App />, // El Layout (Header/Footer) se aplica a todas las rutas hijas
     children: [
       {
-        path: "/", // La ruta exacta "/"
-        element: <HomePage />, // Muestra la página de inicio
+        path: '/',
+        element: <HomePage />,
       },
       {
-        path: "/movies", // Ruta /movies
-        element: <MoviesPage />, // Muestra la página de películas
+        path: '/movies',
+        element: <MoviesPage />,
       },
       {
-        path: "/series",
+        path: '/series',
         element: <SeriesPage />,
       },
       {
-        path: "/sports",
+        path: '/sports',
         element: <SportsPage />,
       },
       {
-        path: "/games",
+        path: '/games',
         element: <GamesPage />,
+      },
+      {
+        // ¡NUEVA RUTA!
+        // El ':id' es un parámetro dinámico.
+        // Capturará /event/1, /event/2, /event/abc, etc.
+        path: '/event/:id',
+        element: <DetailPage />,
       },
     ],
   },
 ]);
 
-// 4. Usamos 'RouterProvider' en lugar de '<App />'
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <RouterProvider router={router} />
-  </React.StrictMode>,
-)
+  </React.StrictMode>
+);
