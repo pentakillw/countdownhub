@@ -9,7 +9,7 @@ import App from './App.jsx'
 import './index.css'
 
 // 1. Importamos TODAS las páginas
-import LandingPage from './pages/LandingPage.jsx'; // <-- ¡Nueva!
+import LandingPage from './pages/LandingPage.jsx';
 import HomePage from './pages/HomePage.jsx';
 import MoviesPage from './pages/MoviesPage.jsx';
 import SeriesPage from './pages/SeriesPage.jsx';
@@ -17,26 +17,24 @@ import DetailPage from './pages/DetailPage.jsx';
 import MyListPage from './pages/MyListPage.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
-import SettingsPage from './pages/SettingsPage.jsx'; // <-- ¡Nueva!
+import SettingsPage from './pages/SettingsPage.jsx';
+import HistoryPage from './pages/HistoryPage.jsx'; // <-- ¡NUEVA IMPORTACIÓN!
 
 
 // 2. Creamos el "mapa" de nuestro sitio
 const router = createBrowserRouter([
   {
     // --- RUTA 1: La Landing Page ---
-    // Esta ruta es la raíz y no usa el layout principal
     path: "/",
     element: <LandingPage />,
   },
   {
     // --- RUTA 2: La Aplicación Principal ---
-    // Todas las páginas de la app viven dentro de /app
-    // y usan el layout <App> (Header y Footer)
     path: "/app",
     element: <App />, 
     children: [
       {
-        index: true, // /app (página por defecto)
+        index: true, // /app
         element: <HomePage />,
       },
       {
@@ -50,6 +48,10 @@ const router = createBrowserRouter([
       {
         path: "my-list", // /app/my-list
         element: <MyListPage />,
+      },
+      {
+        path: "history", // <-- ¡NUEVA RUTA!
+        element: <HistoryPage />,
       },
       {
         path: "settings", // /app/settings

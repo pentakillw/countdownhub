@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Menu, X, Star, LogIn, LogOut, Settings } from 'lucide-react';
+// --- ¡NUEVO ICONO! ---
+import { Menu, X, Star, LogIn, LogOut, Settings, Eye } from 'lucide-react';
 import { useAuth } from './hooks/useAuth.js';
 
 function Header() {
@@ -15,7 +16,7 @@ function Header() {
   const handleLogout = async () => {
     await logout();
     setIsMobileMenuOpen(false);
-    navigate('/'); // Al cerrar sesión, lo mandamos a la Landing Page
+    navigate('/'); 
   };
 
   return (
@@ -23,23 +24,22 @@ function Header() {
       <nav className="container mx-auto px-6 py-4 flex justify-between items-center">
         
         <div>
-          {/* El logo ahora apunta a /app (la app) y no a / (la landing) */}
           <NavLink to="/app" className="text-2xl font-bold flex items-center hover:opacity-80 transition-opacity">
             <span className="text-brand-t450">Clic</span>
             <span className="text-gray-t0 ml-0.5">Times</span>
           </NavLink>
         </div>
 
-        {/* --- NAVEGACIÓN DE ESCRITORIO (RUTAS ACTUALIZADAS) --- */}
+        {/* --- NAVEGACIÓN DE ESCRITORIO --- */}
         <div className="hidden md:flex space-x-2 items-center">
           <NavLink 
-            to="/app/movies" // <-- Ruta actualizada
+            to="/app/movies" 
             className={({ isActive }) => `${linkClasses} text-default ${isActive ? activeLinkClasses : ''}`}
           >
             Películas
           </NavLink>
           <NavLink 
-            to="/app/series" // <-- Ruta actualizada
+            to="/app/series" 
             className={({ isActive }) => `${linkClasses} text-default ${isActive ? activeLinkClasses : ''}`}
           >
             Series
@@ -48,16 +48,24 @@ function Header() {
           {user ? (
             <>
               <NavLink
-                to="/app/my-list" // <-- Ruta actualizada
+                to="/app/my-list"
                 className={({ isActive }) => `${iconLinkClasses} text-default ${isActive ? 'text-action-primary' : ''}`}
               >
                 <Star size={18} className="mr-1" />
                 Mi Lista
               </NavLink>
-              
-              {/* --- ¡NUEVO ENLACE! --- */}
+
+              {/* --- ¡NUEVO ENLACE DE HISTORIAL! --- */}
               <NavLink
-                to="/app/settings" // <-- Ruta nueva
+                to="/app/history"
+                className={({ isActive }) => `${iconLinkClasses} text-default ${isActive ? 'text-action-primary' : ''}`}
+              >
+                <Eye size={18} className="mr-1" />
+                Mi Historial
+              </NavLink>
+              
+              <NavLink
+                to="/app/settings"
                 className={({ isActive }) => `${iconLinkClasses} text-default ${isActive ? 'text-action-primary' : ''}`}
               >
                 <Settings size={18} className="mr-1" />
@@ -75,7 +83,7 @@ function Header() {
             </>
           ) : (
             <NavLink
-              to="/app/login" // <-- Ruta actualizada
+              to="/app/login"
               className={({ isActive }) => `${iconLinkClasses} text-default ${isActive ? 'text-action-primary' : ''}`}
             >
               <LogIn size={18} className="mr-1" />
@@ -96,20 +104,20 @@ function Header() {
         </div>
       </nav>
 
-      {/* --- MENÚ DESPLEGABLE MÓVIL (RUTAS ACTUALIZADAS) --- */}
+      {/* --- MENÚ DESPLEGABLE MÓVIL --- */}
       <div 
         className={`md:hidden ${isMobileMenuOpen ? 'block' : 'hidden'} bg-white shadow-lg absolute top-full left-0 w-full z-40`}
       >
         <div className="flex flex-col space-y-2 px-4 py-3">
           <NavLink 
-            to="/app/movies" // <-- Ruta actualizada
+            to="/app/movies" 
             className={({ isActive }) => `${linkClasses} text-default ${isActive ? activeLinkClasses : ''}`}
             onClick={() => setIsMobileMenuOpen(false)}
           >
             Películas
           </NavLink>
           <NavLink 
-            to="/app/series" // <-- Ruta actualizada
+            to="/app/series" 
             className={({ isActive }) => `${linkClasses} text-default ${isActive ? activeLinkClasses : ''}`}
             onClick={() => setIsMobileMenuOpen(false)}
           >
@@ -121,17 +129,26 @@ function Header() {
           {user ? (
             <>
               <NavLink
-                to="/app/my-list" // <-- Ruta actualizada
+                to="/app/my-list"
                 className={({ isActive }) => `${iconLinkClasses} text-default ${isActive ? 'text-action-primary' : ''}`}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 <Star size={18} className="mr-1" />
                 Mi Lista
               </NavLink>
-              
-              {/* --- ¡NUEVO ENLACE! --- */}
+
+              {/* --- ¡NUEVO ENLACE DE HISTORIAL! --- */}
               <NavLink
-                to="/app/settings" // <-- Ruta nueva
+                to="/app/history"
+                className={({ isActive }) => `${iconLinkClasses} text-default ${isActive ? 'text-action-primary' : ''}`}
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <Eye size={18} className="mr-1" />
+                Mi Historial
+              </NavLink>
+              
+              <NavLink
+                to="/app/settings"
                 className={({ isActive }) => `${iconLinkClasses} text-default ${isActive ? 'text-action-primary' : ''}`}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
@@ -150,7 +167,7 @@ function Header() {
             </>
           ) : (
             <NavLink
-              to="/app/login" // <-- Ruta actualizada
+              to="/app/login"
               className={({ isActive }) => `${iconLinkClasses} text-default ${isActive ? 'text-action-primary' : ''}`}
               onClick={() => setIsMobileMenuOpen(false)}
             >
