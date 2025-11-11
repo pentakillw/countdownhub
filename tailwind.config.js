@@ -6,13 +6,13 @@ export default {
   ],
   theme: {
     extend: {
-      // Aquí podemos definir la paleta de colores del proyecto
+      // --- NUEVA PALETA DE COLORES "ClicTimes" ---
       colors: {
-        'brand-primary': '#6D28D9', // Un morado principal
-        'brand-secondary': '#1F2937', // Un gris oscuro
-        'brand-accent': '#10B981', // Un verde para acentos
-        'brand-light': '#F3F4F6', // Un fondo claro
-        'brand-dark': '#111827', // Un fondo oscuro (nuestro principal)
+        'brand-blue': '#0002CA',     // Azul Duke
+        'brand-green': '#0A4747',    // Verde Brasil
+        'brand-white': '#F9FBFC',    // Blanco Zinc (Fondo principal)
+        'brand-text': '#322D30',     // Gris Foca (Texto principal)
+        'brand-gray': '#5A5B5A',     // Hierro (Texto secundario/bordes)
       },
       fontFamily: {
         sans: ['Inter', 'sans-serif'], // Usamos la fuente Inter como principal

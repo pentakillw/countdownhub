@@ -1,6 +1,4 @@
 import React from 'react';
-// 1. Importamos el componente 'Outlet' de react-router-dom
-// Este <Outlet /> es el "espacio en blanco" que se rellenará
 import { Outlet } from 'react-router-dom'; 
 
 import Header from './Header.jsx';
@@ -11,7 +9,8 @@ function App() {
   return (
     // 'min-h-screen' = Alto mínimo de la pantalla
     // 'flex flex-col' = Layout vertical
-    <div className="min-h-screen flex flex-col bg-brand-dark">
+    // Fondo principal ahora es 'brand-white'
+    <div className="min-h-screen flex flex-col bg-brand-white">
       
       {/* Siempre mostramos el Header */}
       <Header />
@@ -21,9 +20,7 @@ function App() {
       {/* 'container mx-auto...' = Centra el contenido de la página */}
       <main className="flex-grow container mx-auto px-6 py-8">
         
-        {/* 2. Aquí es donde se renderizarán nuestras páginas */}
-        {/* <Outlet /> le dice a React Router: "Carga aquí 
-            HomePage, MoviesPage, etc., según la URL" */}
+        {/* Aquí es donde se renderizarán nuestras páginas (HomePage, DetailPage, etc.) */}
         <Outlet />
         
       </main>

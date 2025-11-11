@@ -4,10 +4,10 @@ import React from 'react';
 function GamesPage() {
   return (
     <div>
-      <h1 className="text-4xl font-bold text-brand-light mb-4">
+      <h1 className="text-4xl font-bold text-brand-text mb-4">
         Videojuegos
       </h1>
-      <p className="text-lg text-brand-light opacity-80">
+      <p className="text-lg text-brand-gray opacity-80">
         Próximamente: Cuentas regresivas de lanzamientos de videojuegos.
       </p>
     </div>

@@ -1,95 +1,101 @@
-import React, { useState } from 'react'; // 1. Importamos useState
+import React, { useState } from 'react';
+// Importamos NavLink para la navegación y los íconos
 import { NavLink } from 'react-router-dom';
-// 2. Importamos los íconos de Menú y X
-import { Menu, X } from 'lucide-react'; 
+import { Menu, X } from 'lucide-react';
 
 function Header() {
-  // 3. Añadimos un estado para saber si el menú móvil está abierto
+  // Estado para manejar si el menú móvil está abierto o cerrado
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  
-  // Clases para los enlaces de escritorio
-  const getLinkClasses = ({ isActive }) => {
-    const baseClasses = "transition-colors font-medium";
-    const activeClasses = "text-brand-primary"; // Morado si está activo
-    const inactiveClasses = "text-brand-light hover:text-brand-primary"; // Blanco si no
-    
-    return isActive ? `${baseClasses} ${activeClasses}` : `${baseClasses} ${inactiveClasses}`;
-  };
 
-  // Clases para los enlaces del menú móvil (son diferentes)
-  const getMobileLinkClasses = ({ isActive }) => {
-    const baseClasses = "block py-3 px-4 text-lg rounded-md transition-colors font-medium";
-    const activeClasses = "bg-brand-primary text-white"; // Fondo morado si está activo
-    const inactiveClasses = "text-brand-light hover:bg-gray-700"; // Fondo gris al pasar el mouse
-    
-    return isActive ? `${baseClasses} ${activeClasses}` : `${baseClasses} ${inactiveClasses}`;
-  };
-
-  // Función para cerrar el menú al hacer clic en un enlace
-  const handleMobileLinkClick = () => {
-    setIsMobileMenuOpen(false);
-  };
+  // Clases base para los enlaces (para no repetirlas)
+  const linkClasses = "font-medium transition-colors duration-200";
+  // Clases para el NavLink activo (subrayado)
+  const activeLinkClasses = "pb-1 border-b-2 border-brand-blue";
 
   return (
-    // 4. Añadimos 'relative' para posicionar el menú desplegable
-    <header className="w-full bg-brand-secondary shadow-lg relative z-10">
+    // Header con fondo blanco y sombra
+    <header className="w-full bg-white shadow-md sticky top-0 z-50">
       <nav className="container mx-auto px-6 py-4 flex justify-between items-center">
         
-        {/* Logo o Título */}
+        {/* Logo o Título del Sitio (ClicTimes) */}
         <div>
-          <NavLink to="/" className="text-2xl font-bold text-brand-primary hover:text-purple-300 transition-colors">
-            CountDownHub
+          <NavLink to="/" className="text-2xl font-bold text-brand-blue hover:opacity-80 transition-opacity">
+            ClicTimes
           </NavLink>
         </div>
 
         {/* Enlaces de Navegación (Escritorio) */}
-        <div className="hidden md:flex space-x-6">
-          <NavLink to="/movies" className={getLinkClasses}>
+        <div className="hidden md:flex space-x-8">
+          <NavLink 
+            to="/movies" 
+            className={({ isActive }) => `${linkClasses} text-brand-text hover:text-brand-blue ${isActive ? activeLinkClasses : ''}`}
+          >
             Películas
           </NavLink>
-          <NavLink to="/series" className={getLinkClasses}>
+          <NavLink 
+            to="/series" 
+            className={({ isActive }) => `${linkClasses} text-brand-text hover:text-brand-blue ${isActive ? activeLinkClasses : ''}`}
+          >
             Series
           </NavLink>
-          <NavLink to="/sports" className={getLinkClasses}>
+          <NavLink 
+            to="/sports" 
+            className={({ isActive }) => `${linkClasses} text-brand-text hover:text-brand-blue ${isActive ? activeLinkClasses : ''}`}
+          >
             Deportes
           </NavLink>
-          <NavLink to="/games" className={getLinkClasses}>
+          <NavLink 
+            to="/games" 
+            className={({ isActive }) => `${linkClasses} text-brand-text hover:text-brand-blue ${isActive ? activeLinkClasses : ''}`}
+          >
             Videojuegos
           </NavLink>
         </div>
 
-        {/* 5. Botón de Menú Móvil (Ahora con lógica) */}
+        {/* Botón de Menú Móvil (visible en pantallas pequeñas) */}
         <div className="md:hidden">
           <button 
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} // <-- Lógica de clic
-            className="text-brand-light focus:outline-none"
-            aria-label="Abrir menú"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
+            className="text-brand-text focus:outline-none"
+            aria-label="Abrir menú de navegación"
           >
-            {/* Cambia el ícono de hamburguesa a 'X' si está abierto */}
-            {isMobileMenuOpen ? (
-              <X className="w-6 h-6" />
-            ) : (
-              <Menu className="w-6 h-6" /> 
-            )}
+            {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
           </button>
         </div>
-
       </nav>
 
-      {/* --- 6. El Menú Móvil Desplegable --- */}
-      {/* Aparece solo en móviles (md:hidden) y si isMobileMenuOpen es true */}
-      <div className={`md:hidden ${isMobileMenuOpen ? 'block' : 'hidden'} absolute w-full bg-brand-secondary shadow-lg py-4`}>
-        <div className="container mx-auto px-6 flex flex-col space-y-2">
-          <NavLink to="/movies" className={getMobileLinkClasses} onClick={handleMobileLinkClick}>
+      {/* --- Menú Desplegable Móvil --- */}
+      {/* Aparece si 'isMobileMenuOpen' es true */}
+      <div 
+        className={`md:hidden ${isMobileMenuOpen ? 'block' : 'hidden'} bg-white shadow-lg absolute top-full left-0 w-full z-40`}
+      >
+        <div className="flex flex-col space-y-4 px-6 py-5">
+          <NavLink 
+            to="/movies" 
+            className={({ isActive }) => `${linkClasses} text-brand-text hover:text-brand-blue ${isActive ? activeLinkClasses : ''}`}
+            onClick={() => setIsMobileMenuOpen(false)} // Cierra el menú al hacer clic
+          >
             Películas
           </NavLink>
-          <NavLink to="/series" className={getMobileLinkClasses} onClick={handleMobileLinkClick}>
+          <NavLink 
+            to="/series" 
+            className={({ isActive }) => `${linkClasses} text-brand-text hover:text-brand-blue ${isActive ? activeLinkClasses : ''}`}
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
             Series
           </NavLink>
-          <NavLink to="/sports" className={getMobileLinkClasses} onClick={handleMobileLinkClick}>
+          <NavLink 
+            to="/sports" 
+            className={({ isActive }) => `${linkClasses} text-brand-text hover:text-brand-blue ${isActive ? activeLinkClasses : ''}`}
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
             Deportes
           </NavLink>
-          <NavLink to="/games" className={getMobileLinkClasses} onClick={handleMobileLinkClick}>
+          <NavLink 
+            to="/games" 
+            className={({ isActive }) => `${linkClasses} text-brand-text hover:text-brand-blue ${isActive ? activeLinkClasses : ''}`}
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
             Videojuegos
           </NavLink>
         </div>

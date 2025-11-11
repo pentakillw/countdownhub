@@ -1,50 +1,35 @@
-import React from 'react';
-// ¡NUEVO! Importamos Link para hacer la tarjeta cliqueable
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom'; // Para hacer la tarjeta cliqueable
 
 // Este componente es una sola tarjeta de cuenta regresiva
 function CountdownCard({ item }) {
   const { id, title, type, release_date, platform, image_url } = item;
 
-  // --- Lógica de la Cuenta Regresiva ---
-  const calculateDaysLeft = () => {
-    const today = new Date();
-    const releaseDate = new Date(release_date);
-    
-    today.setHours(0, 0, 0, 0);
-    releaseDate.setHours(0, 0, 0, 0);
+  // --- Lógica de la Cuenta Regresiva (simplificada) ---
+  const [daysLeft, setDaysLeft] = useState(null);
 
-    const diffTime = releaseDate.getTime() - today.getTime();
+  useEffect(() => {
+    const calculateDays = () => {
+      const today = new Date();
+      const releaseDate = new Date(release_date);
+      
+      // Ajuste para comparar solo fechas (ignorando la hora)
+      today.setHours(0, 0, 0, 0);
+      releaseDate.setHours(0, 0, 0, 0);
 
-    if (diffTime < 0) {
-      return { value: 'Estrenado', unit: '' };
-    }
-    
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (diffDays === 0) {
-       return { value: 'Hoy', unit: '' };
-    }
-    if (diffDays === 1) {
-      return { value: '1', unit: 'Día' };
-    }
-    return { value: diffDays, unit: 'Días' };
-  };
+      const diffTime = releaseDate.getTime() - today.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      setDaysLeft(diffDays);
+    };
 
-  const daysLeft = calculateDaysLeft();
+    calculateDays();
+    // Actualiza el cálculo una vez al día (o si el item cambia)
+    const interval = setInterval(calculateDays, 1000 * 60 * 60 * 24); 
+    return () => clearInterval(interval);
+  }, [release_date]);
 
-  // Define el color del borde izquierdo según el tipo
-  const getTypeColor = (type) => {
-    switch (type) {
-      case 'movie': return 'border-indigo-500';
-      case 'tv': return 'border-teal-500';
-      case 'game': return 'border-red-500';
-      case 'sport': return 'border-yellow-500';
-      default: return 'border-gray-500';
-    }
-  };
-  
-  // Traduce el 'tipo' a español
+  // Formateo del tipo de evento
   const formatType = (type) => {
     if (type === 'movie') return 'Película';
     if (type === 'tv') return 'Serie';
@@ -53,66 +38,85 @@ function CountdownCard({ item }) {
     return type;
   };
 
-  // Define el color de la cuenta regresiva
-  let countdownColor = 'text-brand-primary';
-  if (daysLeft.value === 'Estrenado') {
-    countdownColor = 'text-brand-accent';
-  } else if (daysLeft.value === 'Hoy') {
-    countdownColor = 'text-yellow-400';
+  // Renderizado condicional
+  if (daysLeft === null || daysLeft < 0) {
+    // No renderizamos nada si la fecha ya pasó (la HomePage ya filtra esto,
+    // pero es una doble seguridad)
+    return null; 
   }
 
-  // ¡CAMBIO! Envolvemos todo en un <Link>
-  // Usamos el 'id' del evento (que viene de Supabase) para crear la URL
+  // Define el color del borde y el texto de la cuenta regresiva
+  let accentColorClass = 'text-brand-blue'; // Azul por defecto
+  if (type === 'tv') {
+    accentColorClass = 'text-brand-green'; // Verde para series
+  }
+
   return (
+    // Toda la tarjeta es un enlace a la página de detalle
     <Link 
       to={`/event/${id}`} 
-      className="bg-brand-secondary rounded-lg shadow-xl overflow-hidden transition-transform duration-300 hover:scale-105 flex flex-col"
+      className="bg-white rounded-lg shadow-lg overflow-hidden transition-transform duration-300 hover:shadow-xl hover:-translate-y-1 flex flex-col group"
     >
-      {/* Imagen (ya estaba bien con 'backdrop_path') */}
-      <div className="w-full aspect-video overflow-hidden">
+      
+      {/* Contenedor de la Imagen */}
+      <div className="h-48 w-full overflow-hidden bg-brand-text">
         <img 
           src={image_url} 
-          alt={`Póster de ${title}`} 
-          className="object-cover h-full w-full" 
-          loading="lazy"
+          alt={`Póster de ${title}`}
+          // 'object-cover' rellena la caja, 'w-full' y 'h-full'
+          // 'transition-transform duration-500 group-hover:scale-110' = Efecto de zoom
+          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+          // Fallback por si la imagen no carga
+          onError={(e) => { e.target.onerror = null; e.target.src="https://placehold.co/500x281/322D30/F9FBFC?text=ClicTimes"; }}
         />
       </div>
 
-      {/* Contenido de la tarjeta */}
+      {/* Contenedor del Contenido (con padding) */}
+      {/* 'flex-grow' hace que este div ocupe el espacio, empujando el footer de la tarjeta hacia abajo */}
       <div className="p-5 flex flex-col flex-grow">
         
         {/* Tipo y Plataforma */}
-        <div className={`flex justify-between items-center mb-3 text-sm font-medium ${getTypeColor(type)} border-l-4 pl-2`}>
-          <span className="text-brand-light opacity-80">{formatType(type)}</span>
-          <span className="text-brand-primary font-semibold">{platform}</span>
+        <div className="flex justify-between items-center mb-2 text-sm font-medium">
+          {/* Usamos el color de acento (verde o azul) para el tipo */}
+          <span className={`font-bold ${accentColorClass}`}>
+            {formatType(type)}
+          </span>
+          <span className="text-brand-gray">{platform}</span>
         </div>
 
-        {/* Título (sin altura fija) */}
-        <h3 className="text-2xl font-bold text-brand-light mb-4">
+        {/* Título (Oscuro) */}
+        <h3 className="text-lg font-bold text-brand-text mb-3">
           {title}
         </h3>
 
-        {/* 'mt-auto' empuja esta sección al fondo de la tarjeta */}
-        <div className="flex items-end justify-between mt-auto pt-4 border-t border-gray-700/50">
+        {/* Spacer - empuja el contenido de abajo hacia el fondo */}
+        <div className="flex-grow" />
+
+        {/* Footer de la Tarjeta (Fecha y Cuenta Regresiva) */}
+        {/* 'mt-auto' asegura que se pegue al fondo si el spacer no es suficiente */}
+        <div className="flex items-end justify-between mt-auto pt-4 border-t border-brand-white/10">
           
-          {/* Fecha de Estreno */}
-          <div className="text-brand-light opacity-70">
+          {/* Fecha de Estreno (Gris) */}
+          <div className="text-brand-gray">
             <span className="text-xs block">Estreno:</span>
             <span className="text-sm font-medium">
               {new Date(release_date).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
             </span>
           </div>
           
-          {/* Cuenta Regresiva */}
-          <div className="text-right flex-shrink-0 ml-2">
-            <span className={`text-4xl font-black ${countdownColor}`}>
-              {daysLeft.value}
+          {/* Cuenta Regresiva (Color de acento) */}
+          <div className="text-right">
+            <span className={`text-4xl font-black ${accentColorClass}`}>
+              {daysLeft === 0 ? 'Hoy' : daysLeft}
             </span>
-            <span className="text-lg text-brand-light opacity-80 ml-1">{daysLeft.unit}</span>
+            <span className={`text-lg text-brand-text opacity-80 ml-1 ${daysLeft === 0 ? 'hidden' : 'inline'}`}>
+              {daysLeft === 1 ? 'Día' : 'Días'}
+            </span>
           </div>
+
         </div>
       </div>
-    </Link> // <-- Cerramos el Link
+    </Link>
   );
 }
 
