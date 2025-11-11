@@ -8,8 +8,10 @@ interface TmdbMovie {
   id: number;
   title: string;
   overview: string | null;
-  backdrop_path: string | null; 
+  backdrop_path: string | null;
+  poster_path: string | null;
   release_date: string;
+  genre_ids: number[];
 }
 
 // Define la estructura de nuestra tabla 'events'
@@ -18,15 +20,50 @@ interface Event {
   type: 'movie';
   platform: 'Cine';
   release_date: string;
-  image_url: string;
+  image_url: string; // (Backdrop)
+  poster_image_url: string; // (Poster)
   description: string;
   source_api_id: string;
   last_api_update: string;
+  genres: string[];
 }
 
-// --- ¡NUEVA CONSTANTE! ---
-// Define cuántas páginas de TMDB queremos traer
-const TOTAL_PAGES_TO_FETCH = 3; // 3 páginas * 20 resultados/página = ~60 películas
+// --- ¡CAMBIO AQUÍ! ---
+const TOTAL_PAGES_TO_FETCH = 50; // Aumentado de 10 a 50
+
+// Función para obtener el mapa de géneros
+async function getGenreMap(apiKey: string): Promise<Map<number, string>> {
+  const url = `https://api.themoviedb.org/3/genre/movie/list?api_key=${apiKey}&language=es-MX`;
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error('No se pudo obtener el mapa de géneros de películas');
+  }
+  const data = await response.json();
+  const genreMap = new Map<number, string>();
+  data.genres.forEach((genre: { id: number; name: string }) => {
+    genreMap.set(genre.id, genre.name);
+  });
+  return genreMap;
+}
+
+// --- NUEVAS FUNCIONES DE FECHA ---
+function getTodayDateString(): string {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = (today.getMonth() + 1).toString().padStart(2, '0');
+  const day = today.getDate().toString().padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function getFutureDateString(years: number): string {
+  const today = new Date();
+  const futureDate = new Date(today.setFullYear(today.getFullYear() + years));
+  const year = futureDate.getFullYear();
+  const month = (futureDate.getMonth() + 1).toString().padStart(2, '0');
+  const day = futureDate.getDate().toString().padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+// --- FIN DE NUEVAS FUNCIONES ---
 
 serve(async (req: Request): Promise<Response> => {
   console.log(`Iniciando la función 'update-events' (Películas) para ${TOTAL_PAGES_TO_FETCH} páginas...`);
@@ -46,78 +83,101 @@ serve(async (req: Request): Promise<Response> => {
     }
     const supabaseClient = createClient(supabaseUrl, serviceRoleKey);
 
-    // 3. Configurar la llamada a la API de TMDB
-    const today = new Date().toISOString().split('T')[0];
-    
-    // Este array guardará los resultados de TODAS las páginas
+    // 3. Obtener el mapa de géneros
+    console.log("Obteniendo mapa de géneros de películas...");
+    const genreMap = await getGenreMap(TMDB_API_KEY);
+    console.log(`Mapa de géneros obtenido con ${genreMap.size} entradas.`);
+
+    // --- ¡NUEVA LÓGICA DE FECHAS! ---
+    const todayString = getTodayDateString();
+    const futureString = getFutureDateString(5); // 5 Años en el futuro
+    console.log(`Buscando películas entre ${todayString} y ${futureString}`);
+    // --- FIN LÓGICA DE FECHAS ---
+
     let allEventsToUpsert: Event[] = [];
     
     console.log(`Iniciando bucle de ${TOTAL_PAGES_TO_FETCH} páginas...`);
 
-    // --- ¡NUEVO BUCLE FOR! ---
     for (let page = 1; page <= TOTAL_PAGES_TO_FETCH; page++) {
       console.log(`--- Obteniendo Página ${page} de Películas ---`);
       
+      // --- ¡ENDPOINT Y PARÁMETROS CAMBIADOS! ---
+      // Usamos 'discover/movie' para poder filtrar por rango de fechas
       const TMDB_URL = new URL('https://api.themoviedb.org/3/discover/movie');
       TMDB_URL.searchParams.set('api_key', TMDB_API_KEY);
       TMDB_URL.searchParams.set('language', 'es-MX');
       TMDB_URL.searchParams.set('region', 'MX');
-      TMDB_URL.searchParams.set('sort_by', 'popularity.desc');
-      TMDB_URL.searchParams.set('include_adult', 'false');
-      TMDB_URL.searchParams.set('primary_release_date.gte', today);
-      TMDB_URL.searchParams.set('with_release_type', '3');
-      TMDB_URL.searchParams.set('page', page.toString()); // <-- ¡Página dinámica!
+      TMDB_URL.searchParams.set('page', page.toString());
+      // --- ¡NUEVOS FILTROS DE FECHA Y ORDEN! ---
+      TMDB_URL.searchParams.set('sort_by', 'release_date.asc'); // Más cercanas primero
+      TMDB_URL.searchParams.set('release_date.gte', todayString); // Desde hoy
+      TMDB_URL.searchParams.set('release_date.lte', futureString); // Hasta 5 años
+      // --- FIN DE CAMBIOS DE ENDPOINT ---
 
-      // 4. Llamar a la API de TMDB (para esta página)
+      // 4. Llamar a la API de TMDB
       const tmdbResponse = await fetch(TMDB_URL.toString());
 
       if (!tmdbResponse.ok) {
         console.warn(`Error de TMDB en página ${page}: ${tmdbResponse.statusText}. Saltando esta página.`);
-        continue; // Si falla una página, seguimos con la siguiente
+        continue;
       }
 
       const tmdbData = await tmdbResponse.json();
       const movies: TmdbMovie[] = tmdbData.results;
       console.log(`Página ${page} trajo ${movies.length} películas.`);
 
-      // 5. Transformar y Filtrar los datos (de esta página)
+      // 5. Transformar y Filtrar los datos
       const eventsFromPage: Event[] = movies
         .map((movie) => {
           const imageUrl = movie.backdrop_path
             ? `https://image.tmdb.org/t/p/w500${movie.backdrop_path}`
             : null;
+          
+          const posterUrl = movie.poster_path
+            ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+            : null;
 
-          // Filtramos si falta imagen o fecha
-          if (!imageUrl || !movie.release_date) {
-            console.log(`Filtrando "${movie.title}" por falta de imagen o fecha.`);
+          if (!imageUrl || !posterUrl || !movie.release_date) {
+            console.log(`Filtrando "${movie.title}" por falta de imágenes o fecha.`);
             return null;
           }
 
-          // Si la descripción está vacía, ponemos un texto por defecto
           const description = movie.overview || 'Sinopsis no disponible por el momento.';
+
+          const genres = movie.genre_ids
+            .map((id) => genreMap.get(id))
+            .filter((name): name is string => name !== undefined);
 
           return {
             title: movie.title,
             type: 'movie' as const,
             platform: 'Cine',
-            release_date: `${movie.release_date}T12:00:00Z`, 
+            release_date: `${movie.release_date}T12:00:00Z`,
             image_url: imageUrl,
+            poster_image_url: posterUrl,
             description: description,
             source_api_id: `movie-${movie.id}`,
             last_api_update: new Date().toISOString(),
+            genres: genres,
           };
         })
         .filter((event): event is Event => event !== null); 
         
-      // Añadimos los resultados de esta página al array TOTAL
       allEventsToUpsert.push(...eventsFromPage);
     }
-    // --- FIN DEL BUCLE ---
 
-    console.log(`Total de ${allEventsToUpsert.length} eventos para insertar/actualizar.`);
+    console.log(`Total de eventos (antes de duplicados): ${allEventsToUpsert.length}`);
 
-    // 6. Insertar/Actualizar (Upsert) en Supabase (UNA SOLA VEZ AL FINAL)
-    if (allEventsToUpsert.length === 0) {
+    // De-duplicar la lista ANTES de enviarla a Supabase.
+    const uniqueEventsMap = new Map();
+    allEventsToUpsert.forEach(event => {
+      uniqueEventsMap.set(event.source_api_id, event);
+    });
+    const uniqueEventsToUpsert = Array.from(uniqueEventsMap.values());
+    
+    console.log(`Total de eventos ÚNICOS para insertar/actualizar: ${uniqueEventsToUpsert.length}`);
+
+    if (uniqueEventsToUpsert.length === 0) {
       console.log("No hay eventos nuevos para insertar.");
       return new Response(
         JSON.stringify({ success: true, message: "No hay eventos nuevos." }),
@@ -125,9 +185,10 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
     
+    // 6. Insertar/Actualizar (Upsert) en Supabase
     const { error: upsertError } = await supabaseClient
       .from('events')
-      .upsert(allEventsToUpsert, {
+      .upsert(uniqueEventsToUpsert, {
         onConflict: 'source_api_id',
         ignoreDuplicates: false,
       });
@@ -137,11 +198,11 @@ serve(async (req: Request): Promise<Response> => {
       throw upsertError;
     }
 
-    console.log(`¡Éxito! ${allEventsToUpsert.length} películas actualizadas.`);
+    console.log(`¡Éxito! ${uniqueEventsToUpsert.length} películas actualizadas.`);
 
     // 7. Devolver respuesta de éxito
     return new Response(
-      JSON.stringify({ success: true, message: `${allEventsToUpsert.length} películas actualizadas.` }),
+      JSON.stringify({ success: true, message: `${uniqueEventsToUpsert.length} películas actualizadas.` }),
       { headers: { 'Content-Type': 'application/json' }, status: 200 }
     );
 

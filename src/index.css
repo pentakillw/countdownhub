@@ -4,13 +4,10 @@
 @tailwind utilities;
 
 /* Estilos base para la aplicación */
-/* ¡ARREGLO! Envolvemos los estilos del 'body' en '@layer base' */
-/* Esto le dice a Tailwind que procese estas clases de @apply 
-   junto con el resto de sus estilos base, solucionando el error. */
 @layer base {
   body {
-    /* Fondo claro y texto oscuro por defecto */
-    @apply bg-brand-white text-brand-text; 
+    /* --- ¡SOLUCIÓN AQUÍ! --- */
+    /* Quitamos los @apply que estaban causando el error */
     font-family: 'Inter', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;

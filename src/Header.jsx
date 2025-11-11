@@ -1,62 +1,94 @@
 import React, { useState } from 'react';
-// Importamos NavLink para la navegación y los íconos
-import { NavLink } from 'react-router-dom';
-import { Menu, X } from 'lucide-react';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { Menu, X, Star, LogIn, LogOut, Settings } from 'lucide-react';
+import { useAuth } from './hooks/useAuth.js';
 
 function Header() {
-  // Estado para manejar si el menú móvil está abierto o cerrado
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
 
-  // Clases base para los enlaces (para no repetirlas)
-  const linkClasses = "font-medium transition-colors duration-200";
-  // Clases para el NavLink activo (subrayado)
-  const activeLinkClasses = "pb-1 border-b-2 border-brand-blue";
+  const linkClasses = "font-medium transition-colors duration-200 py-2 px-3 rounded-lg hover:bg-muted";
+  const activeLinkClasses = "pb-1 border-b-2 border-action-primary bg-muted md:bg-transparent"; 
+  const iconLinkClasses = "flex items-center font-medium transition-colors duration-200 py-2 px-3 rounded-lg hover:bg-muted";
+
+  const handleLogout = async () => {
+    await logout();
+    setIsMobileMenuOpen(false);
+    navigate('/'); // Al cerrar sesión, lo mandamos a la Landing Page
+  };
 
   return (
-    // Header con fondo blanco y sombra
     <header className="w-full bg-white shadow-md sticky top-0 z-50">
       <nav className="container mx-auto px-6 py-4 flex justify-between items-center">
         
-        {/* Logo o Título del Sitio (ClicTimes) */}
         <div>
-          <NavLink to="/" className="text-2xl font-bold text-brand-blue hover:opacity-80 transition-opacity">
-            ClicTimes
+          {/* El logo ahora apunta a /app (la app) y no a / (la landing) */}
+          <NavLink to="/app" className="text-2xl font-bold flex items-center hover:opacity-80 transition-opacity">
+            <span className="text-brand-t450">Clic</span>
+            <span className="text-gray-t0 ml-0.5">Times</span>
           </NavLink>
         </div>
 
-        {/* Enlaces de Navegación (Escritorio) */}
-        <div className="hidden md:flex space-x-8">
+        {/* --- NAVEGACIÓN DE ESCRITORIO (RUTAS ACTUALIZADAS) --- */}
+        <div className="hidden md:flex space-x-2 items-center">
           <NavLink 
-            to="/movies" 
-            className={({ isActive }) => `${linkClasses} text-brand-text hover:text-brand-blue ${isActive ? activeLinkClasses : ''}`}
+            to="/app/movies" // <-- Ruta actualizada
+            className={({ isActive }) => `${linkClasses} text-default ${isActive ? activeLinkClasses : ''}`}
           >
             Películas
           </NavLink>
           <NavLink 
-            to="/series" 
-            className={({ isActive }) => `${linkClasses} text-brand-text hover:text-brand-blue ${isActive ? activeLinkClasses : ''}`}
+            to="/app/series" // <-- Ruta actualizada
+            className={({ isActive }) => `${linkClasses} text-default ${isActive ? activeLinkClasses : ''}`}
           >
             Series
           </NavLink>
-          <NavLink 
-            to="/sports" 
-            className={({ isActive }) => `${linkClasses} text-brand-text hover:text-brand-blue ${isActive ? activeLinkClasses : ''}`}
-          >
-            Deportes
-          </NavLink>
-          <NavLink 
-            to="/games" 
-            className={({ isActive }) => `${linkClasses} text-brand-text hover:text-brand-blue ${isActive ? activeLinkClasses : ''}`}
-          >
-            Videojuegos
-          </NavLink>
+          
+          {user ? (
+            <>
+              <NavLink
+                to="/app/my-list" // <-- Ruta actualizada
+                className={({ isActive }) => `${iconLinkClasses} text-default ${isActive ? 'text-action-primary' : ''}`}
+              >
+                <Star size={18} className="mr-1" />
+                Mi Lista
+              </NavLink>
+              
+              {/* --- ¡NUEVO ENLACE! --- */}
+              <NavLink
+                to="/app/settings" // <-- Ruta nueva
+                className={({ isActive }) => `${iconLinkClasses} text-default ${isActive ? 'text-action-primary' : ''}`}
+              >
+                <Settings size={18} className="mr-1" />
+                Configuración
+              </NavLink>
+              
+              <button
+                onClick={handleLogout}
+                className={`${iconLinkClasses} text-subtle hover:text-action-primary`}
+                aria-label="Cerrar Sesión"
+              >
+                <LogOut size={18} className="mr-1" />
+                Cerrar Sesión
+              </button>
+            </>
+          ) : (
+            <NavLink
+              to="/app/login" // <-- Ruta actualizada
+              className={({ isActive }) => `${iconLinkClasses} text-default ${isActive ? 'text-action-primary' : ''}`}
+            >
+              <LogIn size={18} className="mr-1" />
+              Iniciar Sesión
+            </NavLink>
+          )}
         </div>
 
-        {/* Botón de Menú Móvil (visible en pantallas pequeñas) */}
+        {/* Botón de Menú Móvil */}
         <div className="md:hidden">
           <button 
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
-            className="text-brand-text focus:outline-none"
+            className="text-default p-2 rounded-lg hover:bg-muted focus:outline-none focus:ring-2 focus:ring-action-primary"
             aria-label="Abrir menú de navegación"
           >
             {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
@@ -64,40 +96,68 @@ function Header() {
         </div>
       </nav>
 
-      {/* --- Menú Desplegable Móvil --- */}
-      {/* Aparece si 'isMobileMenuOpen' es true */}
+      {/* --- MENÚ DESPLEGABLE MÓVIL (RUTAS ACTUALIZADAS) --- */}
       <div 
         className={`md:hidden ${isMobileMenuOpen ? 'block' : 'hidden'} bg-white shadow-lg absolute top-full left-0 w-full z-40`}
       >
-        <div className="flex flex-col space-y-4 px-6 py-5">
+        <div className="flex flex-col space-y-2 px-4 py-3">
           <NavLink 
-            to="/movies" 
-            className={({ isActive }) => `${linkClasses} text-brand-text hover:text-brand-blue ${isActive ? activeLinkClasses : ''}`}
-            onClick={() => setIsMobileMenuOpen(false)} // Cierra el menú al hacer clic
+            to="/app/movies" // <-- Ruta actualizada
+            className={({ isActive }) => `${linkClasses} text-default ${isActive ? activeLinkClasses : ''}`}
+            onClick={() => setIsMobileMenuOpen(false)}
           >
             Películas
           </NavLink>
           <NavLink 
-            to="/series" 
-            className={({ isActive }) => `${linkClasses} text-brand-text hover:text-brand-blue ${isActive ? activeLinkClasses : ''}`}
+            to="/app/series" // <-- Ruta actualizada
+            className={({ isActive }) => `${linkClasses} text-default ${isActive ? activeLinkClasses : ''}`}
             onClick={() => setIsMobileMenuOpen(false)}
           >
             Series
           </NavLink>
-          <NavLink 
-            to="/sports" 
-            className={({ isActive }) => `${linkClasses} text-brand-text hover:text-brand-blue ${isActive ? activeLinkClasses : ''}`}
-            onClick={() => setIsMobileMenuOpen(false)}
-          >
-            Deportes
-          </NavLink>
-          <NavLink 
-            to="/games" 
-            className={({ isActive }) => `${linkClasses} text-brand-text hover:text-brand-blue ${isActive ? activeLinkClasses : ''}`}
-            onClick={() => setIsMobileMenuOpen(false)}
-          >
-            Videojuegos
-          </NavLink>
+          
+          <hr className="border-default my-2" />
+
+          {user ? (
+            <>
+              <NavLink
+                to="/app/my-list" // <-- Ruta actualizada
+                className={({ isActive }) => `${iconLinkClasses} text-default ${isActive ? 'text-action-primary' : ''}`}
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <Star size={18} className="mr-1" />
+                Mi Lista
+              </NavLink>
+              
+              {/* --- ¡NUEVO ENLACE! --- */}
+              <NavLink
+                to="/app/settings" // <-- Ruta nueva
+                className={({ isActive }) => `${iconLinkClasses} text-default ${isActive ? 'text-action-primary' : ''}`}
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <Settings size={18} className="mr-1" />
+                Configuración
+              </NavLink>
+              
+              <button
+                onClick={handleLogout}
+                className={`${iconLinkClasses} text-subtle hover:text-action-primary text-left`}
+                aria-label="Cerrar Sesión"
+              >
+                <LogOut size={18} className="mr-1" />
+                Cerrar Sesión
+              </button>
+            </>
+          ) : (
+            <NavLink
+              to="/app/login" // <-- Ruta actualizada
+              className={({ isActive }) => `${iconLinkClasses} text-default ${isActive ? 'text-action-primary' : ''}`}
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              <LogIn size={18} className="mr-1" />
+              Iniciar Sesión
+            </NavLink>
+          )}
         </div>
       </div>
     </header>
