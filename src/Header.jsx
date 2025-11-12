@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Menu, X, Star, LogIn, LogOut, Settings, Eye } from 'lucide-react';
-import { useAuth } from './hooks/useAuth.js';
+// --- ¡HE AÑADIDO 'Heart' ---
+import { Menu, X, Star, LogIn, LogOut, Settings, Eye, Heart } from 'lucide-react';
+import { useAuth } from './hooks/useAuth';
 
 function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -91,6 +92,17 @@ function Header() {
               Iniciar Sesión
             </NavLink>
           )}
+
+          {/* --- ¡NUEVO BOTÓN DE APOYO! --- */}
+          <a
+            href="https://buymeacoffee.com/duart3mirar"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center ml-4 px-3 py-2 rounded-lg bg-action-primary text-white text-sm font-medium hover:bg-action-primary-hover transition-colors"
+          >
+            <Heart size={16} className="mr-1.5" />
+            Apoya el proyecto
+          </a>
         </div>
 
         {/* Botón de Menú Móvil */}
@@ -126,6 +138,18 @@ function Header() {
           </NavLink>
           
           <hr className="border-gray-t900 my-2" />
+
+          {/* --- ¡NUEVO BOTÓN DE APOYO (MÓVIL)! --- */}
+          <a
+            href="https://buymeacoffee.com/yourlink"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center px-3 py-2 rounded-lg bg-action-primary text-white text-sm font-medium hover:bg-action-primary-hover transition-colors"
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            <Heart size={16} className="mr-1.5" />
+            Apoya el proyecto
+          </a>
 
           {user ? (
             <>
