@@ -45,8 +45,9 @@ function CountdownCard({ item }) {
 
   return (
     <Link 
-      to={`/app/event/${id}`} // <-- ¡RUTA CORREGIDA!
-      className={`bg-white rounded-lg shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 flex flex-col group ${
+      to={`/app/event/${id}`}
+      // --- CORRECCIÓN: Borde cambiado a gris muy claro (t900) ---
+      className={`bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 flex flex-col group border border-gray-t900 ${
         isPast ? 'opacity-70 hover:opacity-100' : ''
       }`}
     >
@@ -75,7 +76,8 @@ function CountdownCard({ item }) {
 
         <div className="flex-grow" />
 
-        <div className="flex items-end justify-between mt-auto pt-4 border-t border-default">
+        {/* --- CORRECCIÓN: Borde interno cambiado a gris muy claro (t900) --- */}
+        <div className="flex items-end justify-between mt-auto pt-4 border-t border-gray-t900">
           
           <div className="text-subtle">
             <span className="text-xs block flex items-center">

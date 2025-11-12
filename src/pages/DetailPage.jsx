@@ -1,13 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-// --- ¡CORRECCIÓN AQUÍ! ---
-// Quitamos las extensiones .js y .jsx
 import { supabase } from '../supabaseClient';
-import { Calendar, Monitor, Film, PlayCircle, MapPin, Star, X, Eye, Search } from 'lucide-react'; // <-- ¡Añadimos Search!
+import { Calendar, Monitor, Film, PlayCircle, MapPin, Star, X, Eye, Search } from 'lucide-react';
 import CountdownCard from '../components/CountdownCard';
 import { useFavorites } from '../hooks/useFavorites';
 import { useAuth } from '../hooks/useAuth';
-// --- ¡NUEVO HOOK! ---
 import { useWatchedHistory } from '../hooks/useWatchedHistory';
 
 // --- ¡NUEVA VARIABLE DE ENTORNO! ---
@@ -15,7 +12,6 @@ const TMDB_API_KEY = import.meta.env.VITE_TMDB_API_KEY;
 
 // --- Hook para el contador ---
 function useCountdown(targetDate) {
-// ... (código existente del hook sin cambios) ...
   const [timeLeft, setTimeLeft] = useState(null);
   useEffect(() => {
     if (!targetDate) return;
@@ -44,7 +40,6 @@ function useCountdown(targetDate) {
 
 // --- Componente del Modal de Video ---
 function VideoModal({ trailerKey, onClose }) {
-// ... (código existente del modal sin cambios) ...
   return (
     <div 
       className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm"
@@ -78,7 +73,6 @@ function VideoModal({ trailerKey, onClose }) {
 
 // --- Lógica de Búsqueda de Tráiler ---
 const findBestTrailer = (videos) => {
-// ... (código existente de la función sin cambios) ...
   if (!videos || videos.length === 0) return null;
   const youtubeVideos = videos.filter(v => v.site === 'YouTube');
   
@@ -106,7 +100,6 @@ const findBestTrailer = (videos) => {
 function DetailPage() {
   const { id } = useParams();
   const [event, setEvent] = useState(null);
-// ... (código existente de estados sin cambios) ...
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [relatedEvents, setRelatedEvents] = useState([]);
@@ -121,7 +114,6 @@ function DetailPage() {
   const { user } = useAuth();
 
   // --- Hooks de "Mi Lista" y "Vistos" ---
-// ... (código existente de hooks sin cambios) ...
   const { addFavorite, removeFavorite, isFavorite, loadingFavorites } = useFavorites();
   const { addWatched, removeWatched, isWatched, loadingWatched } = useWatchedHistory();
   
@@ -131,7 +123,6 @@ function DetailPage() {
 
   // --- Efecto 1: Cargar datos del Evento ---
   useEffect(() => {
-// ... (código existente de useEffect 1 sin cambios) ...
     // Reseteamos estados al cambiar de ID
     setLoading(true);
     setError(null);
@@ -180,7 +171,6 @@ function DetailPage() {
 
   // --- Efecto 2: Cargar Relacionados ---
   useEffect(() => {
-// ... (código existente de useEffect 2 sin cambios) ...
     if (!event || !event.genres || event.genres.length === 0) {
       setRelatedLoading(false);
       return;
@@ -209,7 +199,6 @@ function DetailPage() {
   }, [event]);
 
   // --- Lógica de Botones ---
-// ... (código existente de lógica de botones sin cambios) ...
   const getEventDetails = (type) => {
     switch (type) {
       case 'movie': return { icon: <Film size={16} className="inline-block" />, label: 'Película' };
@@ -251,7 +240,6 @@ function DetailPage() {
   };
 
   // --- Renderizado ---
-// ... (código existente de renderizado inicial sin cambios) ...
   if (loading) {
     return <div className="text-center py-20 text-subtle text-lg">Cargando...</div>;
   }
@@ -299,7 +287,6 @@ function DetailPage() {
     
       <div className="max-w-5xl mx-auto">
         
-{/* ... (código existente de la cabecera de la página sin cambios) ... */}
         <div className="w-full h-48 md:h-80 lg:h-96 relative">
           <div
             className="w-full h-full bg-cover bg-center rounded-lg shadow-lg"
@@ -332,7 +319,6 @@ function DetailPage() {
                 {event.title}
               </h1>
 
-{/* ... (código existente de la info (fecha, plataforma, géneros) sin cambios) ... */}
               <div className="flex items-center text-subtle text-md mb-2">
                 <Calendar size={18} className="mr-2 flex-shrink-0" />
                 <span className="flex items-center flex-wrap">
@@ -361,7 +347,7 @@ function DetailPage() {
                 </div>
               )}
 
-              {/* --- ¡BOTONES DE ACCIÓN ACTUALIZADOS! --- */}
+              {/* --- ¡BOTONES DE ACCIÓN ACTUALIZADOS Y CORREGIDOS! --- */}
               <div className="flex flex-col sm:flex-row gap-3 mt-auto">
                 {/* Botón de Tráiler */}
                 <button
@@ -378,38 +364,38 @@ function DetailPage() {
                 {/* Botones de Usuario (si está logueado) */}
                 {user && (
                   <div className="flex gap-3">
-                    {/* Botón de Guardar */}
+                    
+                    {/* Botón de Guardar (Estrella) --- ¡CORREGIDO! --- */}
                     <button
                       onClick={handleFavoriteClick}
-// ... (código existente del botón de favorito sin cambios) ...
                       disabled={loadingFavorites}
                       className={`flex items-center justify-center p-3 rounded-lg transition-colors duration-200 shadow-md disabled:opacity-50
                         ${isCurrentlyFavorite
-                          ? 'bg-yellow-400/20 text-yellow-600 hover:bg-yellow-400/40'
+                          ? 'bg-critical-subtle text-text-critical hover:bg-critical-subtle' // ¡Cambiado a Rosa/Rojo!
                           : 'bg-muted text-subtle hover:bg-subtle'
                         }`}
                       aria-label={isCurrentlyFavorite ? "Quitar de Mi Lista" : "Guardar en Mi Lista"}
                     >
                       <Star 
                         size={24} 
-                        fill={isCurrentlyFavorite ? 'currentColor' : 'none'} 
+                        fill={isCurrentlyFavorite ? '#F6B5B6' : 'none'} // ¡Corregido! Relleno pálido (hex de bg-critical-subtle)
                       />
                     </button>
-                    {/* Botón de Visto */}
+                    
+                    {/* Botón de Visto (Ojo) --- ¡CORREGIDO! --- */}
                     <button
                       onClick={handleWatchedClick}
-// ... (código existente del botón de visto sin cambios) ...
                       disabled={loadingWatched}
                       className={`flex items-center justify-center p-3 rounded-lg transition-colors duration-200 shadow-md disabled:opacity-50
                         ${isCurrentlyWatched
-                          ? 'bg-info-subtle text-info hover:bg-deco-azul-2/40'
+                          ? 'bg-info-subtle text-text-info hover:bg-info-subtle' // Azul (está bien)
                           : 'bg-muted text-subtle hover:bg-subtle'
                         }`}
                       aria-label={isCurrentlyWatched ? "Quitar de Vistos" : "Marcar como Visto"}
                     >
                       <Eye 
                         size={24}
-                        fill={isCurrentlyWatched ? 'currentColor' : 'none'}
+                        fill={isCurrentlyWatched ? '#85D1F6' : 'none'} // ¡Corregido! Relleno pálido (hex de bg-info-subtle)
                       />
                     </button>
                   </div>
@@ -422,7 +408,6 @@ function DetailPage() {
 
         {/* --- Cuenta Regresiva --- */}
         <div className="bg-white shadow-md rounded-lg p-6 md:p-8 mt-8">
-{/* ... (código existente de la cuenta regresiva sin cambios) ... */}
           {countdown.isPast ? (
             <div className="text-center">
               <h2 className="text-3xl font-bold text-success">¡Ya se estrenó!</h2>
@@ -444,7 +429,6 @@ function DetailPage() {
 
         {/* --- Sinopsis --- */}
         <div className="bg-white shadow-md rounded-lg p-6 md:p-8 mt-8 mb-8">
-{/* ... (código existente de la sinopsis sin cambios) ... */}
           <h3 className="text-2xl font-bold text-default mb-4">Sinopsis</h3>
           <p className="text-subtle leading-relaxed text-md">
             {event.description || 'Sinopsis no disponible por el momento.'}
@@ -454,7 +438,6 @@ function DetailPage() {
         {/* --- Relacionados --- */}
         {!relatedLoading && relatedEvents.length > 0 && (
           <div className="mt-8 mb-8">
-{/* ... (código existente de relacionados sin cambios) ... */}
             <h3 className="text-3xl font-bold text-default mb-6">
               También te podría interesar
             </h3>

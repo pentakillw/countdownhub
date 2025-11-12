@@ -1,17 +1,17 @@
 import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-// --- ¡NUEVO ICONO! ---
 import { Menu, X, Star, LogIn, LogOut, Settings, Eye } from 'lucide-react';
-import { useAuth } from './hooks/useAuth.js';
+import { useAuth } from './hooks/useAuth';
 
 function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
-  const linkClasses = "font-medium transition-colors duration-200 py-2 px-3 rounded-lg hover:bg-muted";
-  const activeLinkClasses = "pb-1 border-b-2 border-action-primary bg-muted md:bg-transparent"; 
-  const iconLinkClasses = "flex items-center font-medium transition-colors duration-200 py-2 px-3 rounded-lg hover:bg-muted";
+  const linkClasses = "font-medium transition-colors duration-200 py-2 px-3 rounded-lg";
+  const defaultLinkClasses = "text-gray-t500 hover:bg-gray-t100 hover:text-gray-t950";
+  const activeLinkClasses = "text-brand-t500 bg-gray-t50 md:bg-transparent"; 
+  const iconLinkClasses = "flex items-center font-medium transition-colors duration-200 py-2 px-3 rounded-lg";
 
   const handleLogout = async () => {
     await logout();
@@ -20,13 +20,14 @@ function Header() {
   };
 
   return (
-    <header className="w-full bg-white shadow-md sticky top-0 z-50">
+    // --- CORRECCIÓN: Borde cambiado a gris muy claro (t900) ---
+    <header className="w-full bg-white text-default shadow-md sticky top-0 z-50 border-b border-gray-t900">
       <nav className="container mx-auto px-6 py-4 flex justify-between items-center">
         
         <div>
           <NavLink to="/app" className="text-2xl font-bold flex items-center hover:opacity-80 transition-opacity">
-            <span className="text-brand-t450">Clic</span>
-            <span className="text-gray-t0 ml-0.5">Times</span>
+            <span className="text-brand-t500">Clic</span>
+            <span className="text-gray-t950 ml-0.5">Times</span>
           </NavLink>
         </div>
 
@@ -34,13 +35,13 @@ function Header() {
         <div className="hidden md:flex space-x-2 items-center">
           <NavLink 
             to="/app/movies" 
-            className={({ isActive }) => `${linkClasses} text-default ${isActive ? activeLinkClasses : ''}`}
+            className={({ isActive }) => `${linkClasses} ${defaultLinkClasses} ${isActive ? activeLinkClasses : ''}`}
           >
             Películas
           </NavLink>
           <NavLink 
             to="/app/series" 
-            className={({ isActive }) => `${linkClasses} text-default ${isActive ? activeLinkClasses : ''}`}
+            className={({ isActive }) => `${linkClasses} ${defaultLinkClasses} ${isActive ? activeLinkClasses : ''}`}
           >
             Series
           </NavLink>
@@ -49,16 +50,15 @@ function Header() {
             <>
               <NavLink
                 to="/app/my-list"
-                className={({ isActive }) => `${iconLinkClasses} text-default ${isActive ? 'text-action-primary' : ''}`}
+                className={({ isActive }) => `${iconLinkClasses} ${defaultLinkClasses} ${isActive ? 'text-brand-t500' : ''}`}
               >
                 <Star size={18} className="mr-1" />
                 Mi Lista
               </NavLink>
 
-              {/* --- ¡NUEVO ENLACE DE HISTORIAL! --- */}
               <NavLink
                 to="/app/history"
-                className={({ isActive }) => `${iconLinkClasses} text-default ${isActive ? 'text-action-primary' : ''}`}
+                className={({ isActive }) => `${iconLinkClasses} ${defaultLinkClasses} ${isActive ? 'text-brand-t500' : ''}`}
               >
                 <Eye size={18} className="mr-1" />
                 Mi Historial
@@ -66,7 +66,7 @@ function Header() {
               
               <NavLink
                 to="/app/settings"
-                className={({ isActive }) => `${iconLinkClasses} text-default ${isActive ? 'text-action-primary' : ''}`}
+                className={({ isActive }) => `${iconLinkClasses} ${defaultLinkClasses} ${isActive ? 'text-brand-t500' : ''}`}
               >
                 <Settings size={18} className="mr-1" />
                 Configuración
@@ -74,7 +74,7 @@ function Header() {
               
               <button
                 onClick={handleLogout}
-                className={`${iconLinkClasses} text-subtle hover:text-action-primary`}
+                className={`${iconLinkClasses} ${defaultLinkClasses} text-left`}
                 aria-label="Cerrar Sesión"
               >
                 <LogOut size={18} className="mr-1" />
@@ -84,7 +84,7 @@ function Header() {
           ) : (
             <NavLink
               to="/app/login"
-              className={({ isActive }) => `${iconLinkClasses} text-default ${isActive ? 'text-action-primary' : ''}`}
+              className={({ isActive }) => `${iconLinkClasses} ${defaultLinkClasses} ${isActive ? 'text-brand-t500' : ''}`}
             >
               <LogIn size={18} className="mr-1" />
               Iniciar Sesión
@@ -96,7 +96,7 @@ function Header() {
         <div className="md:hidden">
           <button 
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
-            className="text-default p-2 rounded-lg hover:bg-muted focus:outline-none focus:ring-2 focus:ring-action-primary"
+            className="text-gray-t500 p-2 rounded-lg hover:bg-gray-t100 focus:outline-none focus:ring-2 focus:ring-brand-t500"
             aria-label="Abrir menú de navegación"
           >
             {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
@@ -104,43 +104,42 @@ function Header() {
         </div>
       </nav>
 
-      {/* --- MENÚ DESPLEGABLE MÓVIL --- */}
+      {/* --- MENÚ DESPLEGABLE MÓVIL (CORREGIDO) --- */}
       <div 
-        className={`md:hidden ${isMobileMenuOpen ? 'block' : 'hidden'} bg-white shadow-lg absolute top-full left-0 w-full z-40`}
+        className={`md:hidden ${isMobileMenuOpen ? 'block' : 'hidden'} bg-white shadow-lg absolute top-full left-0 w-full z-40 border-t border-gray-t900`}
       >
         <div className="flex flex-col space-y-2 px-4 py-3">
           <NavLink 
             to="/app/movies" 
-            className={({ isActive }) => `${linkClasses} text-default ${isActive ? activeLinkClasses : ''}`}
+            className={({ isActive }) => `${linkClasses} ${defaultLinkClasses} ${isActive ? activeLinkClasses : ''}`}
             onClick={() => setIsMobileMenuOpen(false)}
           >
             Películas
           </NavLink>
           <NavLink 
             to="/app/series" 
-            className={({ isActive }) => `${linkClasses} text-default ${isActive ? activeLinkClasses : ''}`}
+            className={({ isActive }) => `${linkClasses} ${defaultLinkClasses} ${isActive ? activeLinkClasses : ''}`}
             onClick={() => setIsMobileMenuOpen(false)}
           >
             Series
           </NavLink>
           
-          <hr className="border-default my-2" />
+          <hr className="border-gray-t900 my-2" />
 
           {user ? (
             <>
               <NavLink
                 to="/app/my-list"
-                className={({ isActive }) => `${iconLinkClasses} text-default ${isActive ? 'text-action-primary' : ''}`}
+                className={({ isActive }) => `${iconLinkClasses} ${defaultLinkClasses} ${isActive ? 'text-brand-t500' : ''}`}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 <Star size={18} className="mr-1" />
                 Mi Lista
               </NavLink>
 
-              {/* --- ¡NUEVO ENLACE DE HISTORIAL! --- */}
               <NavLink
                 to="/app/history"
-                className={({ isActive }) => `${iconLinkClasses} text-default ${isActive ? 'text-action-primary' : ''}`}
+                className={({ isActive }) => `${iconLinkClasses} ${defaultLinkClasses} ${isActive ? 'text-brand-t500' : ''}`}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 <Eye size={18} className="mr-1" />
@@ -149,7 +148,7 @@ function Header() {
               
               <NavLink
                 to="/app/settings"
-                className={({ isActive }) => `${iconLinkClasses} text-default ${isActive ? 'text-action-primary' : ''}`}
+                className={({ isActive }) => `${iconLinkClasses} ${defaultLinkClasses} ${isActive ? 'text-brand-t500' : ''}`}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 <Settings size={18} className="mr-1" />
@@ -158,7 +157,7 @@ function Header() {
               
               <button
                 onClick={handleLogout}
-                className={`${iconLinkClasses} text-subtle hover:text-action-primary text-left`}
+                className={`${iconLinkClasses} ${defaultLinkClasses} text-left`}
                 aria-label="Cerrar Sesión"
               >
                 <LogOut size={18} className="mr-1" />
@@ -168,7 +167,7 @@ function Header() {
           ) : (
             <NavLink
               to="/app/login"
-              className={({ isActive }) => `${iconLinkClasses} text-default ${isActive ? 'text-action-primary' : ''}`}
+              className={({ isActive }) => `${iconLinkClasses} ${defaultLinkClasses} ${isActive ? 'text-brand-t500' : ''}`}
               onClick={() => setIsMobileMenuOpen(false)}
             >
               <LogIn size={18} className="mr-1" />

@@ -5,11 +5,30 @@
 
 /* Estilos base para la aplicación */
 @layer base {
+  /* --- MEJORA ESTÉTICA: Scroll suave --- */
+  html {
+    scroll-behavior: smooth;
+  }
+  
   body {
-    /* --- ¡SOLUCIÓN AQUÍ! --- */
-    /* Quitamos los @apply que estaban causando el error */
     font-family: 'Inter', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+}
+
+/* --- MEJORA FUNCIONAL: Animación para filtros --- */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.filters-slide-down {
+  animation: slideDown 0.3s ease-out;
 }
