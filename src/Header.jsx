@@ -141,7 +141,7 @@ function Header() {
 
           {/* --- ¡NUEVO BOTÓN DE APOYO (MÓVIL)! --- */}
           <a
-            href="https://buymeacoffee.com/yourlink"
+            href="https://buymeacoffee.com/duart3mirar"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center justify-center px-3 py-2 rounded-lg bg-action-primary text-white text-sm font-medium hover:bg-action-primary-hover transition-colors"
