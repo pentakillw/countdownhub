@@ -119,7 +119,8 @@ function HomePage() {
         </h1>
         <button
           onClick={() => setIsFiltersOpen(!isFiltersOpen)}
-          className="flex items-center gap-2 px-4 py-2 font-medium bg-white text-subtle rounded-lg shadow-sm border border-default hover:bg-muted hover:text-default transition-colors"
+          // --- CORRECCIÓN: Borde cambiado a gris muy claro (t900) ---
+          className="flex items-center gap-2 px-4 py-2 font-medium bg-white text-subtle rounded-lg shadow-sm border border-gray-t900 hover:bg-muted hover:text-default transition-colors"
           aria-label="Mostrar/Ocultar filtros"
         >
           <SlidersHorizontal size={20} />
@@ -139,7 +140,8 @@ function HomePage() {
                 type="text"
                 id="search"
                 placeholder="Ej: La Casa del Dragón..."
-                className="w-full pl-10 pr-4 py-2 border border-default rounded-lg focus:ring-2 focus:ring-action-primary focus:outline-none"
+                // --- CORRECCIÓN: Borde cambiado a gris muy claro (t900) ---
+                className="w-full pl-10 pr-4 py-2 border border-gray-t900 rounded-lg focus:ring-2 focus:ring-action-primary focus:outline-none"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -150,7 +152,8 @@ function HomePage() {
               <label htmlFor="genre" className="block text-sm font-medium text-subtle mb-1">Género</label>
               <select
                 id="genre"
-                className="w-full pl-10 pr-4 py-2 border border-default rounded-lg appearance-none focus:ring-2 focus:ring-action-primary focus:outline-none"
+                // --- CORRECCIÓN: Borde cambiado a gris muy claro (t900) ---
+                className="w-full pl-10 pr-4 py-2 border border-gray-t900 rounded-lg appearance-none focus:ring-2 focus:ring-action-primary focus:outline-none"
                 value={selectedGenre}
                 onChange={(e) => setSelectedGenre(e.target.value)}
                 disabled={availableGenres.length === 0}
@@ -167,7 +170,8 @@ function HomePage() {
               <label htmlFor="date" className="block text-sm font-medium text-subtle mb-1">Fecha de estreno</label>
               <select
                 id="date"
-                className="w-full pl-10 pr-4 py-2 border border-default rounded-lg appearance-none focus:ring-2 focus:ring-action-primary focus:outline-none"
+                // --- CORRECCIÓN: Borde cambiado a gris muy claro (t900) ---
+                className="w-full pl-10 pr-4 py-2 border border-gray-t900 rounded-lg appearance-none focus:ring-2 focus:ring-action-primary focus:outline-none"
                 value={selectedDateFilter}
                 onChange={(e) => setSelectedDateFilter(e.target.value)}
               >
@@ -183,7 +187,8 @@ function HomePage() {
               <label htmlFor="platform" className="block text-sm font-medium text-subtle mb-1">Plataforma</label>
               <select
                 id="platform"
-                className="w-full pl-10 pr-4 py-2 border border-default rounded-lg appearance-none focus:ring-2 focus:ring-action-primary focus:outline-none"
+                // --- CORRECCIÓN: Borde cambiado a gris muy claro (t900) ---
+                className="w-full pl-10 pr-4 py-2 border border-gray-t900 rounded-lg appearance-none focus:ring-2 focus:ring-action-primary focus:outline-none"
                 value={selectedPlatform}
                 onChange={(e) => setSelectedPlatform(e.target.value)}
                 disabled={availablePlatforms.length === 0} 

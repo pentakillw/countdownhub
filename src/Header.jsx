@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { Menu, X, Star, LogIn, LogOut, Settings, Eye } from 'lucide-react';
-import { useAuth } from './hooks/useAuth';
+import { useAuth } from './hooks/useAuth.js';
 
 function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -20,14 +20,15 @@ function Header() {
   };
 
   return (
-    // --- CORRECCIÓN: Borde cambiado a gris muy claro (t900) ---
+    // --- Borde cambiado a gris muy claro (t900) ---
     <header className="w-full bg-white text-default shadow-md sticky top-0 z-50 border-b border-gray-t900">
       <nav className="container mx-auto px-6 py-4 flex justify-between items-center">
         
         <div>
+          {/* --- CORRECCIÓN: Logo restaurado al original (Azul y Negro) --- */}
           <NavLink to="/app" className="text-2xl font-bold flex items-center hover:opacity-80 transition-opacity">
-            <span className="text-brand-t500">Clic</span>
-            <span className="text-gray-t950 ml-0.5">Times</span>
+            <span className="text-brand-t450">Clic</span>
+            <span className="text-gray-t0 ml-0.5">Times</span>
           </NavLink>
         </div>
 
