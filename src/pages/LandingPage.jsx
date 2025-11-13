@@ -1,18 +1,15 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Check, Star, Bell } from 'lucide-react';
-// --- ¡NUEVA IMPORTACIÓN! ---
-// --- ¡RUTA CORREGIDA! ---
-// Asumiendo que Footer.jsx está en src/ y no en src/pages/
+// Importamos los iconos que usaremos
+import { Check, Star, Bell, ListTodo, Newspaper, ArrowRight } from 'lucide-react';
 import Footer from '../Footer.jsx'; // Importamos el footer principal
 
 // Este es un mini-header solo para la Landing Page
 function LandingHeader() {
+  // ... (El código del header no cambia) ...
   return (
     <header className="w-full bg-white shadow-sm sticky top-0 z-50">
       <nav className="container mx-auto px-6 py-4 flex justify-between items-center">
-        {/* --- ¡CONVERTIDO A ENLACE! --- */}
-        {/* Ahora el logo en la Landing Page apunta a la raíz ("/") */}
         <Link to="/" className="text-2xl font-bold flex items-center hover:opacity-80 transition-opacity">
           <span className="text-brand-t450">Clic</span>
           <span className="text-gray-t0 ml-0.5">Times</span>
@@ -36,15 +33,12 @@ function LandingHeader() {
   );
 }
 
-// --- ¡SE ELIMINÓ EL COMPONENTE 'LandingFooter' ---
-// Ya no es necesario, usaremos el 'Footer' principal importado.
-
 function LandingPage() {
   return (
     <div className="min-h-screen flex flex-col bg-white">
       <LandingHeader />
 
-      {/* --- Sección de Héroe --- */}
+      {/* --- Sección de Héroe (Sin cambios) --- */}
       <main className="flex-grow">
         <section className="container mx-auto px-6 py-24 md:py-32 text-center flex flex-col items-center">
           <h1 className="text-5xl md:text-7xl font-extrabold text-default leading-tight mb-6">
@@ -70,7 +64,7 @@ function LandingPage() {
           </div>
         </section>
 
-        {/* --- Sección de Características --- */}
+        {/* --- Sección de Características (Sin cambios) --- */}
         <section className="bg-bg-muted py-20 md:py-24">
           <div className="container mx-auto px-6">
             <h2 className="text-4xl font-bold text-default text-center mb-16">
@@ -110,10 +104,112 @@ function LandingPage() {
             </div>
           </div>
         </section>
+        
+        {/* --- ¡NUEVA SECCIÓN: CÓMO FUNCIONA! --- */}
+        <section className="py-20 md:py-24">
+          <div className="container mx-auto px-6">
+            <div className="grid md:grid-cols-2 gap-12 items-center">
+              {/* Columna de Imagen */}
+              <div>
+                <img 
+                  src="https://placehold.co/600x400/3D414A/F2F3F4?text=Tu+Lista+Personal" 
+                  alt="Vista previa de Mi Lista en ClicTimes"
+                  className="rounded-lg shadow-xl"
+                />
+              </div>
+              {/* Columna de Texto */}
+              <div className="text-left">
+                <div className="inline-flex items-center justify-center bg-brand-subtle text-action-primary rounded-full p-3 mb-4">
+                  <ListTodo size={28} />
+                </div>
+                <h2 className="text-4xl font-bold text-default mb-6">
+                  Organiza todo tu contenido
+                </h2>
+                <p className="text-lg text-subtle mb-6">
+                  ClicTimes te permite llevar un control total. Cubrimos miles de películas
+                  y series en un solo lugar.
+                </p>
+                <ul className="space-y-4 text-subtle">
+                  <li className="flex items-start">
+                    <Star size={20} className="mr-3 text-brand-t450 flex-shrink-0 mt-1" />
+                    <span>
+                      Usa <strong>Mi Lista (⭐)</strong> para guardar los estrenos que
+                      más esperas y no perderles la pista.
+                    </span>
+                  </li>
+                  <li className="flex items-start">
+                    <Check size={20} className="mr-3 text-success flex-shrink-0 mt-1" />
+                    <span>
+                      Marca lo que ya viste con <strong>Mi Historial (👁️)</strong> para
+                      mantener un registro de tu contenido.
+                    </span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* --- ¡NUEVA SECCIÓN: BLOG! --- */}
+        <section className="py-20 md:py-24 bg-bg-muted">
+          <div className="container mx-auto px-6">
+            <div className="grid md:grid-cols-2 gap-12 items-center">
+              {/* Columna de Texto (orden 2 en móvil) */}
+              <div className="text-left md:order-2">
+                <div className="inline-flex items-center justify-center bg-info-subtle text-info rounded-full p-3 mb-4">
+                  <Newspaper size={28} />
+                </div>
+                <h2 className="text-4xl font-bold text-default mb-6">
+                  Lee análisis y noticias en el Blog
+                </h2>
+                <p className="text-lg text-subtle mb-6">
+                  Para cumplir con AdSense y ofrecerte valor, nuestro blog está
+                  lleno de artículos originales, análisis y noticias sobre
+                  el mundo del cine y las series. ¡Descubre contenido nuevo
+                  cada semana!
+                </p>
+                <Link 
+                  to="/app/blog" 
+                  className="inline-flex items-center font-medium text-brand-t450 hover:text-brand-t400 transition-colors"
+                >
+                  Ir al Blog
+                  <ArrowRight size={20} className="ml-1.5" />
+                </Link>
+              </div>
+              
+              {/* Columna de Imagen (orden 1 en móvil) */}
+              <div className="md:order-1">
+                <img 
+                  src="https://placehold.co/600x400/000165/F2F3F4?text=Blog+ClicTimes" 
+                  alt="Vista previa del Blog de ClicTimes"
+                  className="rounded-lg shadow-xl"
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* --- ¡NUEVA SECCIÓN: LLAMADA A LA ACCIÓN FINAL! --- */}
+        <section className="py-24 bg-action-primary text-white">
+          <div className="container mx-auto px-6 text-center">
+            <h2 className="text-4xl font-extrabold mb-4">
+              ¿Qué estás esperando?
+            </h2>
+            <p className="text-xl text-gray-t800 mb-8 max-w-xl mx-auto">
+              Crea tu cuenta gratuita hoy mismo y ten el control total
+              de los estrenos que te importan.
+            </p>
+            <Link 
+              to="/app/register" 
+              className="font-medium bg-white text-action-primary transition-colors duration-200 py-3 px-8 rounded-lg text-lg hover:bg-gray-t900 shadow-lg"
+            >
+              Crear Cuenta Gratis
+            </Link>
+          </div>
+        </section>
+
       </main>
       
-      {/* --- ¡FOOTER ACTUALIZADO! --- */}
-      {/* Ahora usa el 'Footer' principal en lugar de 'LandingFooter' */}
       <Footer />
     </div>
   );
