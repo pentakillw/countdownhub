@@ -1,16 +1,22 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Check, Star, Bell } from 'lucide-react';
+// --- ¡NUEVA IMPORTACIÓN! ---
+// --- ¡RUTA CORREGIDA! ---
+// Asumiendo que Footer.jsx está en src/ y no en src/pages/
+import Footer from '../Footer.jsx'; // Importamos el footer principal
 
 // Este es un mini-header solo para la Landing Page
 function LandingHeader() {
   return (
     <header className="w-full bg-white shadow-sm sticky top-0 z-50">
       <nav className="container mx-auto px-6 py-4 flex justify-between items-center">
-        <div className="text-2xl font-bold flex items-center">
+        {/* --- ¡CONVERTIDO A ENLACE! --- */}
+        {/* Ahora el logo en la Landing Page apunta a la raíz ("/") */}
+        <Link to="/" className="text-2xl font-bold flex items-center hover:opacity-80 transition-opacity">
           <span className="text-brand-t450">Clic</span>
           <span className="text-gray-t0 ml-0.5">Times</span>
-        </div>
+        </Link>
         <div className="space-x-4">
           <Link 
             to="/app/login" 
@@ -30,20 +36,8 @@ function LandingHeader() {
   );
 }
 
-// Este es un mini-footer solo para la Landing Page
-function LandingFooter() {
-  return (
-    <footer className="w-full bg-bg-muted py-8">
-      <div className="container mx-auto px-6 text-center text-subtle">
-        <div className="text-xl font-bold flex items-center justify-center mb-4">
-          <span className="text-brand-t450">Clic</span>
-          <span className="text-gray-t0 ml-0.5">Times</span>
-        </div>
-        <p>© {new Date().getFullYear()} ClicTimes. Todos los derechos reservados.</p>
-      </div>
-    </footer>
-  );
-}
+// --- ¡SE ELIMINÓ EL COMPONENTE 'LandingFooter' ---
+// Ya no es necesario, usaremos el 'Footer' principal importado.
 
 function LandingPage() {
   return (
@@ -118,7 +112,9 @@ function LandingPage() {
         </section>
       </main>
       
-      <LandingFooter />
+      {/* --- ¡FOOTER ACTUALIZADO! --- */}
+      {/* Ahora usa el 'Footer' principal en lugar de 'LandingFooter' */}
+      <Footer />
     </div>
   );
 }

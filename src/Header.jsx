@@ -1,13 +1,17 @@
 import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-// --- ¡HE AÑADIDO 'Heart' ---
-import { Menu, X, Star, LogIn, LogOut, Settings, Eye, Heart } from 'lucide-react';
-import { useAuth } from './hooks/useAuth';
+import { Menu, X, Star, LogIn, LogOut, Settings, Eye, Heart, BookOpen } from 'lucide-react';
+// --- ¡ERROR CORREGIDO! ---
+// Se añadió la extensión .js para que el sistema de imports de Vite
+// pueda encontrar el archivo correctamente.
+import { useAuth } from './hooks/useAuth.js';
 
 function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  // --- ¡NUEVA LÓGICA DE ENLACE! ---
+  const logoDestination = user ? '/app' : '/';
 
   const linkClasses = "font-medium transition-colors duration-200 py-2 px-3 rounded-lg";
   const defaultLinkClasses = "text-gray-t500 hover:bg-gray-t100 hover:text-gray-t950";
@@ -21,15 +25,14 @@ function Header() {
   };
 
   return (
-    // --- Borde cambiado a gris muy claro (t900) ---
     <header className="w-full bg-white text-default shadow-md sticky top-0 z-50 border-b border-gray-t900">
-      <nav className="container mx-auto px-6 py-4 flex justify-between items-center">
-        
-        <div>
-          {/* --- CORRECCIÓN: Logo restaurado al original (Azul y Negro) --- */}
-          <NavLink to="/app" className="text-2xl font-bold flex items-center hover:opacity-80 transition-opacity">
-            <span className="text-brand-t450">Clic</span>
-            <span className="text-gray-t0 ml-0.5">Times</span>
+    <nav className="container mx-auto px-6 py-4 flex justify-between items-center">
+      
+      <div>
+        {/* --- ¡ENLACE ACTUALIZADO! --- */}
+        <NavLink to={logoDestination} className="text-2xl font-bold flex items-center hover:opacity-80 transition-opacity">
+          <span className="text-brand-t450">Clic</span>
+          <span className="text-gray-t0 ml-0.5">Times</span>
           </NavLink>
         </div>
 
@@ -48,6 +51,15 @@ function Header() {
             Series
           </NavLink>
           
+          {/* --- ¡NUEVO ENLACE AL BLOG! --- */}
+          <NavLink 
+            to="/app/blog" 
+            className={({ isActive }) => `${iconLinkClasses} ${defaultLinkClasses} ${isActive ? 'text-brand-t500' : ''}`}
+          >
+            <BookOpen size={18} className="mr-1" />
+            Blog
+          </NavLink>
+          
           {user ? (
             <>
               <NavLink
@@ -57,7 +69,7 @@ function Header() {
                 <Star size={18} className="mr-1" />
                 Mi Lista
               </NavLink>
-
+              {/* ... (resto de enlaces de usuario) ... */}
               <NavLink
                 to="/app/history"
                 className={({ isActive }) => `${iconLinkClasses} ${defaultLinkClasses} ${isActive ? 'text-brand-t500' : ''}`}
@@ -84,6 +96,7 @@ function Header() {
               </button>
             </>
           ) : (
+             // ... (Botón Iniciar Sesión) ...
             <NavLink
               to="/app/login"
               className={({ isActive }) => `${iconLinkClasses} ${defaultLinkClasses} ${isActive ? 'text-brand-t500' : ''}`}
@@ -93,7 +106,6 @@ function Header() {
             </NavLink>
           )}
 
-          {/* --- ¡NUEVO BOTÓN DE APOYO! --- */}
           <a
             href="https://buymeacoffee.com/duart3mirar"
             target="_blank"
@@ -136,10 +148,19 @@ function Header() {
           >
             Series
           </NavLink>
+
+          {/* --- ¡NUEVO ENLACE AL BLOG (MÓVIL)! --- */}
+          <NavLink 
+            to="/app/blog" 
+            className={({ isActive }) => `${iconLinkClasses} ${defaultLinkClasses} ${isActive ? 'text-brand-t500' : ''}`}
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            <BookOpen size={18} className="mr-1" />
+            Blog
+          </NavLink>
           
           <hr className="border-gray-t900 my-2" />
 
-          {/* --- ¡NUEVO BOTÓN DE APOYO (MÓVIL)! --- */}
           <a
             href="https://buymeacoffee.com/duart3mirar"
             target="_blank"
@@ -161,7 +182,7 @@ function Header() {
                 <Star size={18} className="mr-1" />
                 Mi Lista
               </NavLink>
-
+              {/* ... (resto de enlaces de usuario móvil) ... */}
               <NavLink
                 to="/app/history"
                 className={({ isActive }) => `${iconLinkClasses} ${defaultLinkClasses} ${isActive ? 'text-brand-t500' : ''}`}
@@ -190,6 +211,7 @@ function Header() {
               </button>
             </>
           ) : (
+            // ... (Botón Iniciar Sesión móvil) ...
             <NavLink
               to="/app/login"
               className={({ isActive }) => `${iconLinkClasses} ${defaultLinkClasses} ${isActive ? 'text-brand-t500' : ''}`}
