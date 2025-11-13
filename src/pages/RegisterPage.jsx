@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { useAuth } from '../hooks/useAuth.js';
+// ¡Importamos Link para los enlaces!
 import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth.js';
 import { UserPlus } from 'lucide-react';
 
 function RegisterPage() {
@@ -10,6 +11,10 @@ function RegisterPage() {
   const [message, setMessage] = useState(null);
   const [loading, setLoading] = useState(false);
   
+  // --- ¡NUEVO ESTADO! ---
+  // Estado para la casilla de aceptación
+  const [agreed, setAgreed] = useState(false);
+  
   const { register } = useAuth();
   const navigate = useNavigate();
 
@@ -17,6 +22,14 @@ function RegisterPage() {
     e.preventDefault();
     setError(null);
     setMessage(null);
+    
+    // --- ¡NUEVA VALIDACIÓN! ---
+    // Verificamos si la casilla está marcada
+    if (!agreed) {
+      setError("Debes aceptar los Términos y Condiciones y la Política de Privacidad para registrarte.");
+      return; // Detenemos el envío
+    }
+
     setLoading(true);
     try {
       const { error } = await register(email, password);
@@ -37,6 +50,8 @@ function RegisterPage() {
         Crear Cuenta
       </h1>
       
+      {/* --- ¡CORRECCIÓN AQUÍ! --- */}
+      {/* Se eliminó el </div> extra que estaba después de este bloque */}
       {error && (
         <div className="bg-critical-subtle border-l-4 border-border-critical-strong text-text-critical p-4 mb-4" role="alert">
           <p>{error}</p>
@@ -66,7 +81,7 @@ function RegisterPage() {
             />
           </div>
           
-          <div className="mb-6">
+          <div className="mb-4"> {/* Reducido el margen de mb-6 a mb-4 */}
             <label htmlFor="password" className="block text-sm font-medium text-subtle mb-1">
               Contraseña
             </label>
@@ -83,9 +98,36 @@ function RegisterPage() {
             <p className="text-xs text-subtle mt-1">Mínimo 6 caracteres.</p>
           </div>
 
+          {/* --- ¡NUEVA SECCIÓN DE ACEPTACIÓN! --- */}
+          <div className="mb-6">
+            <label htmlFor="agree" className="flex items-start space-x-2">
+              <input
+                type="checkbox"
+                id="agree"
+                // Añadimos clases de Tailwind para que se vea bien
+                className="mt-0.5 rounded border-gray-t800 text-action-primary focus:ring-action-primary"
+                checked={agreed}
+                onChange={(e) => setAgreed(e.target.checked)}
+              />
+              <span className="text-sm text-subtle">
+                Acepto los{' '}
+                <Link to="/app/terms" target="_blank" className="text-action-primary font-medium hover:underline">
+                  Términos y Condiciones
+                </Link>
+                {' '}y la{' '}
+                <Link to="/app/privacy" target="_blank" className="text-action-primary font-medium hover:underline">
+                  Política de Privacidad
+                </Link>
+                .
+              </span>
+            </label>
+          </div>
+
           <button
             type="submit"
-            disabled={loading}
+            // Deshabilitado si está cargando O si no ha aceptado
+            disabled={loading || !agreed}
+            // Añadimos 'transition-opacity' y 'disabled:opacity-50' para feedback visual
             className="w-full bg-deco-verde-1 text-white py-2 px-4 rounded-lg font-medium hover:opacity-90 transition-opacity flex items-center justify-center disabled:opacity-50"
           >
             <UserPlus size={18} className="mr-2" />
