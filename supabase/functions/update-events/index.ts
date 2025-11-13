@@ -3,7 +3,22 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 // @deno-types="npm:@supabase/supabase-js@2.0.0"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.0.0';
 
-// Define la estructura de los datos que esperamos de TMDB
+// --- NUEVA INTERFAZ DE EVENTO ---
+// Añadimos trailer_url y hacemos platform un string dinámico
+interface Event {
+  title: string;
+  type: 'movie';
+  platform: string; // Ya no es 'Cine', será dinámico
+  release_date: string;
+  image_url: string;
+  poster_image_url: string;
+  description: string;
+  source_api_id: string;
+  last_api_update: string;
+  genres: string[];
+  trailer_url: string | null; // ¡NUEVO CAMPO!
+}
+
 interface TmdbMovie {
   id: number;
   title: string;
@@ -14,30 +29,17 @@ interface TmdbMovie {
   genre_ids: number[];
 }
 
-// Define la estructura de nuestra tabla 'events'
-interface Event {
-  title: string;
-  type: 'movie';
-  platform: 'Cine';
-  release_date: string;
-  image_url: string; // (Backdrop)
-  poster_image_url: string; // (Poster)
-  description: string;
-  source_api_id: string;
-  last_api_update: string;
-  genres: string[];
-}
+const TOTAL_PAGES_TO_FETCH = 50;
 
-// --- ¡CAMBIO AQUÍ! ---
-const TOTAL_PAGES_TO_FETCH = 50; // Aumentado de 10 a 50
+// --- INICIO DE NUEVAS FUNCIONES DE AYUDA ---
 
-// Función para obtener el mapa de géneros
+/**
+ * Obtiene el mapa de géneros de TMDB.
+ */
 async function getGenreMap(apiKey: string): Promise<Map<number, string>> {
   const url = `https://api.themoviedb.org/3/genre/movie/list?api_key=${apiKey}&language=es-MX`;
   const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error('No se pudo obtener el mapa de géneros de películas');
-  }
+  if (!response.ok) throw new Error('No se pudo obtener el mapa de géneros de películas');
   const data = await response.json();
   const genreMap = new Map<number, string>();
   data.genres.forEach((genre: { id: number; name: string }) => {
@@ -46,103 +48,162 @@ async function getGenreMap(apiKey: string): Promise<Map<number, string>> {
   return genreMap;
 }
 
-// --- NUEVAS FUNCIONES DE FECHA ---
+/**
+ * Busca el mejor tráiler en los resultados de videos de TMDB.
+ * Prioriza Tráilers oficiales de YouTube.
+ */
+function findBestTmdbTrailer(videos: any[]): string | null {
+  if (!videos || videos.length === 0) return null;
+
+  const trailers = videos.filter(v => v.site === 'YouTube' && v.type === 'Trailer');
+  const officialTrailer = trailers.find(v => v.official === true);
+
+  // Devuelve el tráiler oficial, o el primer tráiler, o nada.
+  return officialTrailer?.key || trailers[0]?.key || null;
+}
+
+/**
+ * Busca la plataforma de streaming o estreno en cines para MX.
+ */
+function findProvider(providers: any): string {
+  if (!providers || !providers.MX) return 'Por Anunciar';
+
+  const mx = providers.MX;
+
+  // 1. Prioridad: Plataformas de Streaming (flatrate)
+  if (mx.flatrate && mx.flatrate.length > 0) {
+    return mx.flatrate[0].provider_name;
+  }
+  // 2. Siguiente: Estreno en Cines (theatrical)
+  if (mx.theatrical && mx.theatrical.length > 0) {
+    return 'Cine';
+  }
+  // 3. Siguiente: Renta o Compra
+  if (mx.rent && mx.rent.length > 0) {
+    return mx.rent[0].provider_name;
+  }
+  if (mx.buy && mx.buy.length > 0) {
+    return mx.buy[0].provider_name;
+  }
+  
+  // 4. Default
+  return 'Por Anunciar';
+}
+
+/**
+ * Fallback: Busca un tráiler en la API de YouTube si TMDB falla.
+ */
+async function searchYouTubeTrailer(
+  query: string,
+  apiKey: string,
+): Promise<string | null> {
+  console.log(`Fallback de YouTube: Buscando "${query}"`);
+  const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&key=${apiKey}&type=video&maxResults=1`;
+  
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      console.error("Error en API de YouTube:", await response.text());
+      return null;
+    }
+    const data = await response.json();
+    const videoId = data.items?.[0]?.id?.videoId;
+    return videoId || null;
+  } catch (err) {
+    console.error("Error al contactar YouTube:", err);
+    return null;
+  }
+}
+
+// Funciones de fecha (sin cambios)
 function getTodayDateString(): string {
   const today = new Date();
-  const year = today.getFullYear();
-  const month = (today.getMonth() + 1).toString().padStart(2, '0');
-  const day = today.getDate().toString().padStart(2, '0');
-  return `${year}-${month}-${day}`;
+  return today.toISOString().split('T')[0];
 }
 
 function getFutureDateString(years: number): string {
   const today = new Date();
-  const futureDate = new Date(today.setFullYear(today.getFullYear() + years));
-  const year = futureDate.getFullYear();
-  const month = (futureDate.getMonth() + 1).toString().padStart(2, '0');
-  const day = futureDate.getDate().toString().padStart(2, '0');
-  return `${year}-${month}-${day}`;
+  today.setFullYear(today.getFullYear() + years);
+  return today.toISOString().split('T')[0];
 }
-// --- FIN DE NUEVAS FUNCIONES ---
+
+// --- FIN DE NUEVAS FUNCIONES DE AYUDA ---
 
 serve(async (req: Request): Promise<Response> => {
-  console.log(`Iniciando la función 'update-events' (Películas) para ${TOTAL_PAGES_TO_FETCH} páginas...`);
+  console.log(`Iniciando 'update-events' (Películas) para ${TOTAL_PAGES_TO_FETCH} páginas...`);
 
   try {
-    // 1. Obtener claves secretas
+    // 1. Obtener claves secretas (¡NUEVA CLAVE DE YOUTUBE!)
     const TMDB_API_KEY = Deno.env.get('TMDB_API_KEY');
-    if (!TMDB_API_KEY) {
-      throw new Error('Falta la variable TMDB_API_KEY');
-    }
-
-    // 2. Crear el cliente de Supabase
+    const YOUTUBE_API_KEY = Deno.env.get('YOUTUBE_API_KEY'); // ¡NUEVA!
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-    if (!supabaseUrl || !serviceRoleKey) {
-      throw new Error("Faltan variables de entorno de Supabase.");
+
+    if (!TMDB_API_KEY || !supabaseUrl || !serviceRoleKey) {
+      throw new Error("Faltan variables de entorno de Supabase o TMDB.");
     }
+    // No lanzamos error si falta YouTube, solo advertimos
+    if (!YOUTUBE_API_KEY) {
+      console.warn("Advertencia: Falta YOUTUBE_API_KEY. El fallback de tráilers no funcionará.");
+    }
+
+    // 2. Crear clientes
     const supabaseClient = createClient(supabaseUrl, serviceRoleKey);
-
-    // 3. Obtener el mapa de géneros
-    console.log("Obteniendo mapa de géneros de películas...");
     const genreMap = await getGenreMap(TMDB_API_KEY);
-    console.log(`Mapa de géneros obtenido con ${genreMap.size} entradas.`);
-
-    // --- ¡NUEVA LÓGICA DE FECHAS! ---
+    
+    // 3. Lógica de fechas
     const todayString = getTodayDateString();
-    const futureString = getFutureDateString(5); // 5 Años en el futuro
+    const futureString = getFutureDateString(5);
     console.log(`Buscando películas entre ${todayString} y ${futureString}`);
-    // --- FIN LÓGICA DE FECHAS ---
 
     let allEventsToUpsert: Event[] = [];
     
-    console.log(`Iniciando bucle de ${TOTAL_PAGES_TO_FETCH} páginas...`);
-
+    // 4. Bucle principal de páginas
     for (let page = 1; page <= TOTAL_PAGES_TO_FETCH; page++) {
       console.log(`--- Obteniendo Página ${page} de Películas ---`);
       
-      // --- ¡ENDPOINT Y PARÁMETROS CAMBIADOS! ---
-      // Usamos 'discover/movie' para poder filtrar por rango de fechas
-      const TMDB_URL = new URL('https://api.themoviedb.org/3/discover/movie');
-      TMDB_URL.searchParams.set('api_key', TMDB_API_KEY);
-      TMDB_URL.searchParams.set('language', 'es-MX');
-      TMDB_URL.searchParams.set('region', 'MX');
-      TMDB_URL.searchParams.set('page', page.toString());
-      // --- ¡NUEVOS FILTROS DE FECHA Y ORDEN! ---
-      TMDB_URL.searchParams.set('sort_by', 'release_date.asc'); // Más cercanas primero
-      TMDB_URL.searchParams.set('release_date.gte', todayString); // Desde hoy
-      TMDB_URL.searchParams.set('release_date.lte', futureString); // Hasta 5 años
-      // --- FIN DE CAMBIOS DE ENDPOINT ---
-
-      // 4. Llamar a la API de TMDB
-      const tmdbResponse = await fetch(TMDB_URL.toString());
-
-      if (!tmdbResponse.ok) {
-        console.warn(`Error de TMDB en página ${page}: ${tmdbResponse.statusText}. Saltando esta página.`);
-        continue;
-      }
+      const TMDB_URL = `https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_API_KEY}&language=es-MX&region=MX&page=${page}&sort_by=release_date.asc&release_date.gte=${todayString}&release_date.lte=${futureString}`;
+      
+      const tmdbResponse = await fetch(TMDB_URL);
+      if (!tmdbResponse.ok) continue;
 
       const tmdbData = await tmdbResponse.json();
       const movies: TmdbMovie[] = tmdbData.results;
       console.log(`Página ${page} trajo ${movies.length} películas.`);
 
-      // 5. Transformar y Filtrar los datos
-      const eventsFromPage: Event[] = movies
-        .map((movie) => {
-          const imageUrl = movie.backdrop_path
-            ? `https://image.tmdb.org/t/p/w500${movie.backdrop_path}`
-            : null;
-          
-          const posterUrl = movie.poster_path
-            ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
-            : null;
+      // --- ¡NUEVO! Bucle Concurrente para Detalles ---
+      // Obtenemos detalles (tráilers/plataformas) para todas las películas de la página a la vez
+      const detailPromises = movies.map(async (movie) => {
+        try {
+          const [videosRes, providersRes] = await Promise.all([
+            fetch(`https://api.themoviedb.org/3/movie/${movie.id}/videos?api_key=${TMDB_API_KEY}&language=es-MX,en-US`),
+            fetch(`https://api.themoviedb.org/3/movie/${movie.id}/watch/providers?api_key=${TMDB_API_KEY}`)
+          ]);
 
-          if (!imageUrl || !posterUrl || !movie.release_date) {
-            console.log(`Filtrando "${movie.title}" por falta de imágenes o fecha.`);
-            return null;
+          if (!videosRes.ok || !providersRes.ok) return null;
+
+          const videosData = await videosRes.json();
+          const providersData = await providersRes.json();
+
+          // Lógica de Tráiler
+          let trailerKey = findBestTmdbTrailer(videosData.results);
+          if (!trailerKey && YOUTUBE_API_KEY) {
+            const releaseYear = movie.release_date ? movie.release_date.split('-')[0] : '';
+            trailerKey = await searchYouTubeTrailer(
+              `${movie.title} ${releaseYear} trailer oficial`,
+              YOUTUBE_API_KEY
+            );
           }
+          const trailerUrl = trailerKey ? `https://www.youtube.com/watch?v=${trailerKey}` : null;
 
-          const description = movie.overview || 'Sinopsis no disponible por el momento.';
+          // Lógica de Plataforma
+          const platform = findProvider(providersData.results);
+          
+          // --- Construir el objeto Evento ---
+          const imageUrl = movie.backdrop_path ? `https://image.tmdb.org/t/p/w500${movie.backdrop_path}` : null;
+          const posterUrl = movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : null;
+
+          if (!imageUrl || !posterUrl || !movie.release_date) return null;
 
           const genres = movie.genre_ids
             .map((id) => genreMap.get(id))
@@ -151,41 +212,42 @@ serve(async (req: Request): Promise<Response> => {
           return {
             title: movie.title,
             type: 'movie' as const,
-            platform: 'Cine',
+            platform: platform, // ¡Dinámico!
             release_date: `${movie.release_date}T12:00:00Z`,
             image_url: imageUrl,
             poster_image_url: posterUrl,
-            description: description,
+            description: movie.overview || 'Sinopsis no disponible por el momento.',
             source_api_id: `movie-${movie.id}`,
             last_api_update: new Date().toISOString(),
             genres: genres,
+            trailer_url: trailerUrl, // ¡Nuevo!
           };
-        })
-        .filter((event): event is Event => event !== null); 
+        } catch (err) {
+          console.error(`Error procesando película ${movie.id}:`, err);
+          return null;
+        }
+      });
+
+      const eventsFromPage = (await Promise.all(detailPromises))
+        .filter((event): event is Event => event !== null);
         
       allEventsToUpsert.push(...eventsFromPage);
     }
 
-    console.log(`Total de eventos (antes de duplicados): ${allEventsToUpsert.length}`);
-
-    // De-duplicar la lista ANTES de enviarla a Supabase.
+    // 5. De-duplicar y Guardar en Supabase (sin cambios)
+    console.log(`Total (antes de duplicados): ${allEventsToUpsert.length}`);
     const uniqueEventsMap = new Map();
     allEventsToUpsert.forEach(event => {
       uniqueEventsMap.set(event.source_api_id, event);
     });
     const uniqueEventsToUpsert = Array.from(uniqueEventsMap.values());
     
-    console.log(`Total de eventos ÚNICOS para insertar/actualizar: ${uniqueEventsToUpsert.length}`);
+    console.log(`Total ÚNICOS para insertar/actualizar: ${uniqueEventsToUpsert.length}`);
 
     if (uniqueEventsToUpsert.length === 0) {
-      console.log("No hay eventos nuevos para insertar.");
-      return new Response(
-        JSON.stringify({ success: true, message: "No hay eventos nuevos." }),
-        { headers: { 'Content-Type': 'application/json' }, status: 200 }
-      );
+      return new Response(JSON.stringify({ success: true, message: "No hay eventos nuevos." }), { headers: { 'Content-Type': 'application/json' }, status: 200 });
     }
     
-    // 6. Insertar/Actualizar (Upsert) en Supabase
     const { error: upsertError } = await supabaseClient
       .from('events')
       .upsert(uniqueEventsToUpsert, {
@@ -193,24 +255,13 @@ serve(async (req: Request): Promise<Response> => {
         ignoreDuplicates: false,
       });
 
-    if (upsertError) {
-      console.error('Error al insertar en Supabase:', upsertError);
-      throw upsertError;
-    }
+    if (upsertError) throw upsertError;
 
     console.log(`¡Éxito! ${uniqueEventsToUpsert.length} películas actualizadas.`);
-
-    // 7. Devolver respuesta de éxito
-    return new Response(
-      JSON.stringify({ success: true, message: `${uniqueEventsToUpsert.length} películas actualizadas.` }),
-      { headers: { 'Content-Type': 'application/json' }, status: 200 }
-    );
+    return new Response(JSON.stringify({ success: true, message: `${uniqueEventsToUpsert.length} películas actualizadas.` }), { headers: { 'Content-Type': 'application/json' }, status: 200 });
 
   } catch (error) {
     console.error('Error en la función:', error.message, error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { headers: { 'Content-Type': 'application/json' }, status: 500 }
-    );
+    return new Response(JSON.stringify({ error: error.message }), { headers: { 'Content-Type': 'application/json' }, status: 500 });
   }
 });

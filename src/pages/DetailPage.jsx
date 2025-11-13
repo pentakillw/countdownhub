@@ -1,16 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
-import { Calendar, Monitor, Film, PlayCircle, MapPin, Star, X, Eye, Search } from 'lucide-react';
+// Eliminamos 'Search', ya no se usa
+import { Calendar, Monitor, Film, PlayCircle, MapPin, Star, X, Eye } from 'lucide-react';
 import CountdownCard from '../components/CountdownCard';
 import { useFavorites } from '../hooks/useFavorites';
 import { useAuth } from '../hooks/useAuth';
 import { useWatchedHistory } from '../hooks/useWatchedHistory';
 
-// --- ¡NUEVA VARIABLE DE ENTORNO! ---
-const TMDB_API_KEY = import.meta.env.VITE_TMDB_API_KEY;
-
-// --- Hook para el contador ---
+// --- Hook para el contador (sin cambios) ---
 function useCountdown(targetDate) {
   const [timeLeft, setTimeLeft] = useState(null);
   useEffect(() => {
@@ -38,8 +36,29 @@ function useCountdown(targetDate) {
   return timeLeft;
 }
 
-// --- Componente del Modal de Video ---
-function VideoModal({ trailerKey, onClose }) {
+// --- ¡NUEVA FUNCIÓN! ---
+// Ayudante para extraer el ID de video de una URL de YouTube
+function getYouTubeID(url) {
+  if (!url) return null;
+  // Expresión regular para encontrar el ID en varios formatos de URL (watch, embed, short)
+  // --- ¡CORRECCIÓN AQUÍ! --- (Se quitó el escape '\' antes del '&')
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+  const match = url.match(regExp);
+  return (match && match[2].length === 11) ? match[2] : null;
+}
+
+// --- Componente del Modal de Video (Modificado) ---
+// Ahora acepta la URL completa y extrae el ID
+function VideoModal({ trailerUrl, onClose }) {
+  const videoId = getYouTubeID(trailerUrl);
+
+  if (!videoId) {
+    // Si la URL es inválida, no mostramos el modal (o mostramos un error)
+    // Cerramos el modal por si acaso
+    onClose();
+    return null; 
+  }
+
   return (
     <div 
       className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm"
@@ -47,7 +66,7 @@ function VideoModal({ trailerKey, onClose }) {
     >
       <div 
         className="relative w-full max-w-4xl bg-black rounded-lg shadow-xl overflow-hidden"
-        onClick={(e) => e.stopPropagation()} // Evita que el clic en el video cierre el modal
+        onClick={(e) => e.stopPropagation()} 
       >
         <button
           onClick={onClose}
@@ -59,7 +78,7 @@ function VideoModal({ trailerKey, onClose }) {
         <div className="aspect-video">
           <iframe
             className="w-full h-full"
-            src={`https://www.youtube.com/embed/${trailerKey}?autoplay=1&rel=0`}
+            src={`https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`}
             title="Tráiler oficial"
             frameBorder="0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -71,31 +90,8 @@ function VideoModal({ trailerKey, onClose }) {
   );
 }
 
-// --- Lógica de Búsqueda de Tráiler ---
-const findBestTrailer = (videos) => {
-  if (!videos || videos.length === 0) return null;
-  const youtubeVideos = videos.filter(v => v.site === 'YouTube');
-  
-  // Prioridades
-  const checks = [
-    (v) => v.type === 'Trailer' && v.official === true,
-    (v) => v.type === 'Trailer',
-    (v) => v.type === 'Teaser' && v.official === true,
-    (v) => v.type === 'Teaser',
-    (v) => v.type === 'Clip' && v.official === true,
-    (v) => v.type === 'Clip',
-    (v) => v.type === 'Featurette',
-  ];
-
-  for (const check of checks) {
-    const found = youtubeVideos.find(check);
-    if (found) return found.key;
-  }
-  
-  // Si falla todo, devuelve el primer video de YouTube
-  return youtubeVideos.length > 0 ? youtubeVideos[0].key : null;
-};
-
+// --- Lógica de Búsqueda de Tráiler (ELIMINADA) ---
+// ya no es necesaria en el frontend.
 
 function DetailPage() {
   const { id } = useParams();
@@ -105,15 +101,14 @@ function DetailPage() {
   const [relatedEvents, setRelatedEvents] = useState([]);
   const [relatedLoading, setRelatedLoading] = useState(true);
 
-  // --- ¡NUEVOS ESTADOS DE TRÁILER! ---
-  const [trailerKey, setTrailerKey] = useState(null);
-  const [loadingTrailer, setLoadingTrailer] = useState(true);
+  // --- ¡ESTADOS DE TRÁILER ELIMINADOS! ---
+  // const [trailerKey, setTrailerKey] = useState(null); // ELIMINADO
+  // const [loadingTrailer, setLoadingTrailer] = useState(true); // ELIMINADO
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const countdown = useCountdown(event?.release_date);
   const { user } = useAuth();
 
-  // --- Hooks de "Mi Lista" y "Vistos" ---
   const { addFavorite, removeFavorite, isFavorite, loadingFavorites } = useFavorites();
   const { addWatched, removeWatched, isWatched, loadingWatched } = useWatchedHistory();
   
@@ -121,55 +116,44 @@ function DetailPage() {
   const isCurrentlyFavorite = isFavorite(eventIdAsNumber);
   const isCurrentlyWatched = isWatched(eventIdAsNumber);
 
-  // --- Efecto 1: Cargar datos del Evento ---
+  // --- Efecto 1: Cargar datos del Evento (Simplificado) ---
   useEffect(() => {
-    // Reseteamos estados al cambiar de ID
     setLoading(true);
     setError(null);
     setEvent(null);
     setRelatedEvents([]);
     setRelatedLoading(true);
-    setTrailerKey(null);
-    setLoadingTrailer(true);
     setIsModalOpen(false);
 
-    const fetchEventAndTrailer = async () => {
+    const fetchEvent = async () => {
       try {
-        // --- Cargar Evento de Supabase ---
+        // --- ¡ÚNICA FUENTE DE VERDAD! ---
+        // Obtenemos todo de Supabase, incluyendo 'trailer_url'
         const { data: eventData, error: eventError } = await supabase
           .from('events')
           .select('*')
           .eq('id', id)
           .single();
+        
         if (eventError) throw eventError;
         if (!eventData) throw new Error('Evento no encontrado');
+        
         setEvent(eventData);
 
-        // --- Cargar Tráiler de TMDB ---
-        if (TMDB_API_KEY) {
-          const apiType = eventData.type === 'tv' ? 'tv' : 'movie';
-          const tmdbId = eventData.source_api_id.split('-')[1]; // Ej: "movie-123" -> "123"
-          const trailerUrl = `https://api.themoviedb.org/3/${apiType}/${tmdbId}/videos?api_key=${TMDB_API_KEY}&language=es-MX,en-US`;
-          
-          const trailerResponse = await fetch(trailerUrl);
-          if (trailerResponse.ok) {
-            const videoData = await trailerResponse.json();
-            const bestKey = findBestTrailer(videoData.results);
-            setTrailerKey(bestKey);
-          }
-        }
+        // --- LÓGICA DE TRÁILER ELIMINADA DE AQUÍ ---
+
       } catch (err) {
-        console.error("Error al cargar evento o tráiler:", err);
+        console.error("Error al cargar evento:", err);
         setError(err.message);
       } finally {
         setLoading(false);
-        setLoadingTrailer(false);
+        // setLoadingTrailer(false); // ELIMINADO
       }
     };
-    fetchEventAndTrailer();
-  }, [id, TMDB_API_KEY]); // Depende de TMDB_API_KEY
+    fetchEvent();
+  }, [id]); // Dependencias simplificadas
 
-  // --- Efecto 2: Cargar Relacionados ---
+  // --- Efecto 2: Cargar Relacionados (Sin cambios) ---
   useEffect(() => {
     if (!event || !event.genres || event.genres.length === 0) {
       setRelatedLoading(false);
@@ -198,7 +182,7 @@ function DetailPage() {
     fetchRelated();
   }, [event]);
 
-  // --- Lógica de Botones ---
+  // --- Lógica de Botones (Sin cambios) ---
   const getEventDetails = (type) => {
     switch (type) {
       case 'movie': return { icon: <Film size={16} className="inline-block" />, label: 'Película' };
@@ -224,19 +208,13 @@ function DetailPage() {
     }
   };
 
-  // --- ¡NUEVO MANEJADOR DE CLIC PARA EL TRÁILER! ---
+  // --- ¡MANEJADOR DE TRÁILER SIMPLIFICADO! ---
   const handleTrailerClick = () => {
-    if (loadingTrailer) return; // No hacer nada si está cargando
-    
-    if (trailerKey) {
-      // Si tenemos un tráiler, abrimos el modal
+    // Si el evento existe Y tiene una trailer_url, abrimos el modal
+    if (event && event.trailer_url) {
       setIsModalOpen(true);
-    } else {
-      // Si NO tenemos tráiler, buscamos en YouTube
-      const searchQuery = encodeURIComponent(`${event.title} ${event.type === 'tv' ? 'Serie' : 'Película'} Trailer`);
-      const youtubeUrl = `https://www.youtube.com/results?search_query=${searchQuery}`;
-      window.open(youtubeUrl, '_blank', 'noopener,noreferrer');
     }
+    // No hay 'else' - si no hay URL, el botón estará deshabilitado
   };
 
   // --- Renderizado ---
@@ -249,7 +227,7 @@ function DetailPage() {
         <h2 className="text-2xl font-bold text-critical mb-4">Error: Evento no encontrado</h2>
         <p className="text-subtle mb-6">{error}</p>
         <Link 
-          to="/app" // <-- ¡RUTA CORREGIDA!
+          to="/app" 
           className="text-action-primary font-medium hover:underline"
         >
           Volver al inicio
@@ -263,26 +241,21 @@ function DetailPage() {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
   });
 
-  // --- ¡NUEVA LÓGICA DE ESTILO Y TEXTO DEL BOTÓN! ---
-  let trailerButtonText = 'Buscando...';
+  // --- ¡NUEVA LÓGICA DE BOTÓN! ---
+  // Basada directamente en event.trailer_url
+  const hasTrailer = event && event.trailer_url;
+  
+  let trailerButtonText = hasTrailer ? 'Ver Tráiler' : 'Tráiler no disponible';
   let trailerButtonIcon = <PlayCircle size={20} className="mr-2" />;
-  let trailerButtonClass = 'bg-subtle text-gray-t500 cursor-not-allowed'; // Estado de carga
-
-  if (!loadingTrailer) {
-    if (trailerKey) {
-      trailerButtonText = 'Ver Tráiler';
-      trailerButtonClass = 'bg-action-primary text-white hover:bg-action-primary-hover';
-    } else {
-      trailerButtonText = 'Buscar Tráiler';
-      trailerButtonIcon = <Search size={20} className="mr-2" />; // Cambiamos el icono
-      trailerButtonClass = 'bg-action-secondary text-white hover:bg-action-secondary-pressed'; // Botón gris clicable
-    }
-  }
+  let trailerButtonClass = hasTrailer
+    ? 'bg-action-primary text-white hover:bg-action-primary-hover' // Clicable
+    : 'bg-subtle text-gray-t500 cursor-not-allowed'; // Deshabilitado
 
   return (
     <>
-      {isModalOpen && trailerKey && (
-        <VideoModal trailerKey={trailerKey} onClose={() => setIsModalOpen(false)} />
+      {/* --- ¡MODAL ACTUALIZADO! --- */}
+      {isModalOpen && event.trailer_url && (
+        <VideoModal trailerUrl={event.trailer_url} onClose={() => setIsModalOpen(false)} />
       )}
     
       <div className="max-w-5xl mx-auto">
@@ -331,7 +304,8 @@ function DetailPage() {
               </div>
               <div className="flex items-center text-subtle text-md mb-6">
                 <PlayCircle size={18} className="mr-2 flex-shrink-0" />
-                <span>{event.platform}</span>
+                {/* --- ¡Mostramos la plataforma dinámica! --- */}
+                <span>{event.platform || 'Plataforma no anunciada'}</span>
               </div>
 
               {event.genres && event.genres.length > 0 && (
@@ -347,12 +321,12 @@ function DetailPage() {
                 </div>
               )}
 
-              {/* --- ¡BOTONES DE ACCIÓN ACTUALIZADOS Y CORREGIDOS! --- */}
+              {/* --- ¡BOTONES DE ACCIÓN ACTUALIZADOS! --- */}
               <div className="flex flex-col sm:flex-row gap-3 mt-auto">
                 {/* Botón de Tráiler */}
                 <button
-                  onClick={handleTrailerClick} // <-- Nuevo manejador
-                  disabled={loadingTrailer} // <-- Solo deshabilitado mientras carga
+                  onClick={handleTrailerClick} 
+                  disabled={!hasTrailer} // ¡Deshabilitado si no hay tráiler!
                   className={`flex-1 flex items-center justify-center text-lg font-medium py-3 px-5 rounded-lg transition-colors duration-200 shadow-md
                     ${trailerButtonClass}
                   `}
@@ -365,37 +339,37 @@ function DetailPage() {
                 {user && (
                   <div className="flex gap-3">
                     
-                    {/* Botón de Guardar (Estrella) --- ¡CORREGIDO! --- */}
+                    {/* Botón de Guardar (Estrella) */}
                     <button
                       onClick={handleFavoriteClick}
                       disabled={loadingFavorites}
                       className={`flex items-center justify-center p-3 rounded-lg transition-colors duration-200 shadow-md disabled:opacity-50
                         ${isCurrentlyFavorite
-                          ? 'bg-critical-subtle text-text-critical hover:bg-critical-subtle' // ¡Cambiado a Rosa/Rojo!
+                          ? 'bg-critical-subtle text-text-critical hover:bg-critical-subtle' 
                           : 'bg-muted text-subtle hover:bg-subtle'
                         }`}
                       aria-label={isCurrentlyFavorite ? "Quitar de Mi Lista" : "Guardar en Mi Lista"}
                     >
                       <Star 
                         size={24} 
-                        fill={isCurrentlyFavorite ? '#F6B5B6' : 'none'} // ¡Corregido! Relleno pálido (hex de bg-critical-subtle)
+                        fill={isCurrentlyFavorite ? '#F6B5B6' : 'none'} 
                       />
                     </button>
                     
-                    {/* Botón de Visto (Ojo) --- ¡CORREGIDO! --- */}
+                    {/* Botón de Visto (Ojo) */}
                     <button
                       onClick={handleWatchedClick}
                       disabled={loadingWatched}
                       className={`flex items-center justify-center p-3 rounded-lg transition-colors duration-200 shadow-md disabled:opacity-50
                         ${isCurrentlyWatched
-                          ? 'bg-info-subtle text-text-info hover:bg-info-subtle' // Azul (está bien)
+                          ? 'bg-info-subtle text-text-info hover:bg-info-subtle' 
                           : 'bg-muted text-subtle hover:bg-subtle'
                         }`}
                       aria-label={isCurrentlyWatched ? "Quitar de Vistos" : "Marcar como Visto"}
                     >
                       <Eye 
                         size={24}
-                        fill={isCurrentlyWatched ? '#85D1F6' : 'none'} // ¡Corregido! Relleno pálido (hex de bg-info-subtle)
+                        fill={isCurrentlyWatched ? '#85D1F6' : 'none'} 
                       />
                     </button>
                   </div>
@@ -406,7 +380,7 @@ function DetailPage() {
           </div>
         </div>
 
-        {/* --- Cuenta Regresiva --- */}
+        {/* --- Cuenta Regresiva (Sin cambios) --- */}
         <div className="bg-white shadow-md rounded-lg p-6 md:p-8 mt-8">
           {countdown.isPast ? (
             <div className="text-center">
@@ -427,7 +401,7 @@ function DetailPage() {
           )}
         </div>
 
-        {/* --- Sinopsis --- */}
+        {/* --- Sinopsis (Sin cambios) --- */}
         <div className="bg-white shadow-md rounded-lg p-6 md:p-8 mt-8 mb-8">
           <h3 className="text-2xl font-bold text-default mb-4">Sinopsis</h3>
           <p className="text-subtle leading-relaxed text-md">
@@ -435,7 +409,7 @@ function DetailPage() {
           </p>
         </div>
 
-        {/* --- Relacionados --- */}
+        {/* --- Relacionados (Sin cambios) --- */}
         {!relatedLoading && relatedEvents.length > 0 && (
           <div className="mt-8 mb-8">
             <h3 className="text-3xl font-bold text-default mb-6">

@@ -1,98 +1,474 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { BookOpen } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { supabase } from '../supabaseClient';
+// Eliminamos 'Search', ya no se usa
+import { Calendar, Monitor, Film, PlayCircle, MapPin, Star, X, Eye } from 'lucide-react';
+import CountdownCard from '../components/CountdownCard';
+import { useFavorites } from '../hooks/useFavorites';
+import { useAuth } from '../hooks/useAuth';
+import { useWatchedHistory } from '../hooks/useWatchedHistory';
 
-// --- Datos de ejemplo para el blog ---
-// Deberás reemplazar esto con datos de Supabase en el futuro
-const blogPosts = [
-  {
-    slug: 'analisis-cine-superheroes-2025',
-    title: 'Análisis: El estado del cine de superhéroes en 2025',
-    excerpt: 'Tras años de dominio, exploramos si el género aún tiene la fuerza de antes o si necesita una reinvención urgente...',
-    date: '13 de noviembre de 2025',
-    author: 'Admin ClicTimes',
-    imageUrl: 'https://placehold.co/600x400/0C0D0F/E6E7EB?text=Superheroes'
-  },
-  {
-    slug: 'mejores-series-streaming-noviembre',
-    title: 'Las 5 series que no te puedes perder en Noviembre',
-    excerpt: 'El streaming no descansa. Te recomendamos 5 joyas que llegan este mes y que no querrás dejar pasar...',
-    date: '11 de noviembre de 2025',
-    author: 'Admin ClicTimes',
-    imageUrl: 'https://placehold.co/600x400/3D414A/F2F3F4?text=Series'
-  },
-  {
-    slug: 'peliculas-terror-mas-esperadas',
-    title: 'El regreso del terror: Las películas más esperadas',
-    excerpt: 'Desde secuelas de franquicias famosas hasta nuevas IPs que prometen no dejarnos dormir. Esto es lo que viene...',
-    date: '10 de noviembre de 2025',
-    author: 'Admin ClicTimes',
-    imageUrl: 'https://placehold.co/600x400/E84346/F2F3F4?text=Terror'
-  },
-  {
-    slug: 'guia-plataformas-streaming',
-    title: 'Guía Definitiva: ¿Qué plataforma de streaming vale la pena en 2025?',
-    excerpt: 'Max, Netflix, Prime Video, Disney+... Analizamos el catálogo, precio y estrenos de cada una para ayudarte a decidir.',
-    date: '8 de noviembre de 2025',
-    author: 'Admin ClicTimes',
-    imageUrl: 'https://placehold.co/600x400/12A4E9/F2F3F4?text=Guia'
-  },
-  {
-    slug: 'proximos-estrenos-cine-vs-streaming',
-    title: 'La batalla continúa: Próximos estrenos, ¿Cine o Streaming?',
-    excerpt: 'Analizamos la tendencia de los grandes estudios. ¿Están volviendo a la exclusividad en cines o la ventana es cosa del pasado?',
-    date: '5 de noviembre de 2025',
-    author: 'Admin ClicTimes',
-    imageUrl: 'https://placehold.co/600x400/000165/F2F3F4?text=Cine'
-  },
-];
+// --- Hook para el contador (sin cambios) ---
+function useCountdown(targetDate) {
+// ... existing code ...
+  const [timeLeft, setTimeLeft] = useState(null);
+  useEffect(() => {
+    if (!targetDate) return;
+    const calculateTimeLeft = () => {
+      const now = new Date().getTime();
+// ... existing code ...
+      const target = new Date(targetDate).getTime();
+      const difference = target - now;
+      if (difference <= 0) {
+        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0, isPast: true });
+        return;
+      }
+      setTimeLeft({
+        days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+        minutes: Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60)),
+        seconds: Math.floor((difference % (1000 * 60)) / 1000),
+        isPast: false,
+      });
+    };
+    calculateTimeLeft();
+    const interval = setInterval(calculateTimeLeft, 1000);
+    return () => clearInterval(interval);
+  }, [targetDate]);
+  return timeLeft;
+}
 
-function BlogPage() {
+// --- ¡NUEVA FUNCIÓN! ---
+// Ayudante para extraer el ID de video de una URL de YouTube
+function getYouTubeID(url) {
+  if (!url) return null;
+  // Expresión regular para encontrar el ID en varios formatos de URL (watch, embed, short)
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+  const match = url.match(regExp);
+  return (match && match[2].length === 11) ? match[2] : null;
+}
+
+// --- Componente del Modal de Video (Modificado) ---
+// Ahora acepta la URL completa y extrae el ID
+function VideoModal({ trailerUrl, onClose }) {
+  const videoId = getYouTubeID(trailerUrl);
+
+  if (!videoId) {
+    // Si la URL es inválida, no mostramos el modal (o mostramos un error)
+    // Cerramos el modal por si acaso
+    onClose();
+    return null; 
+  }
+
   return (
-    <div className="max-w-6xl mx-auto">
-      <div className="text-center mb-12">
-        <BookOpen size={48} className="mx-auto text-brand-t450 mb-4" />
-        <h1 className="text-4xl md:text-5xl font-extrabold text-default mb-3">
-          Blog de ClicTimes
-        </h1>
-        <p className="text-lg text-subtle">
-          Noticias, análisis y artículos sobre el mundo del cine y las series.
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {blogPosts.map((post) => (
-          <article
-            key={post.slug}
-            className="bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 flex flex-col group border border-gray-t900"
-          >
-            <div className="h-48 w-full overflow-hidden bg-strong">
-              <img
-                src={post.imageUrl}
-                alt={`Imagen para ${post.title}`}
-                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-              />
-            </div>
-            <div className="p-6 flex flex-col flex-grow">
-              <span className="text-xs font-medium text-subtle mb-2">{post.date}</span>
-              <h2 className="text-xl font-bold text-default mb-3">
-                {post.title}
-              </h2>
-              <p className="text-subtle text-sm mb-4 flex-grow">
-                {post.excerpt}
-              </p>
-              <Link
-                to={`/app/blog/${post.slug}`}
-                className="font-medium text-brand-t450 hover:text-brand-t400 transition-colors duration-200 self-start"
-              >
-                Leer más &rarr;
-              </Link>
-            </div>
-          </article>
-        ))}
+    <div 
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div 
+        className="relative w-full max-w-4xl bg-black rounded-lg shadow-xl overflow-hidden"
+        onClick={(e) => e.stopPropagation()} 
+      >
+        <button
+          onClick={onClose}
+          className="absolute -top-1 -right-1 z-50 text-white bg-gray-t100 rounded-full p-1.5 hover:bg-gray-t200 transition-colors"
+          aria-label="Cerrar tráiler"
+        >
+          <X size={24} />
+        </button>
+        <div className="aspect-video">
+          <iframe
+            className="w-full h-full"
+            src={`https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`}
+            title="Tráiler oficial"
+            frameBorder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          ></iframe>
+        </div>
       </div>
     </div>
   );
 }
 
-export default BlogPage;
+// --- Lógica de Búsqueda de Tráiler (ELIMINADA) ---
+// ya no es necesaria en el frontend.
+
+function DetailPage() {
+  const { id } = useParams();
+  const [event, setEvent] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [relatedEvents, setRelatedEvents] = useState([]);
+  const [relatedLoading, setRelatedLoading] = useState(true);
+
+  // --- ¡ESTADOS DE TRÁILER ELIMINADOS! ---
+  // const [trailerKey, setTrailerKey] = useState(null); // ELIMINADO
+  // const [loadingTrailer, setLoadingTrailer] = useState(true); // ELIMINADO
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const countdown = useCountdown(event?.release_date);
+  const { user } = useAuth();
+
+  const { addFavorite, removeFavorite, isFavorite, loadingFavorites } = useFavorites();
+  const { addWatched, removeWatched, isWatched, loadingWatched } = useWatchedHistory();
+  
+  const eventIdAsNumber = Number(id);
+  const isCurrentlyFavorite = isFavorite(eventIdAsNumber);
+  const isCurrentlyWatched = isWatched(eventIdAsNumber);
+
+  // --- Efecto 1: Cargar datos del Evento (Simplificado) ---
+  useEffect(() => {
+    setLoading(true);
+    setError(null);
+    setEvent(null);
+    setRelatedEvents([]);
+    setRelatedLoading(true);
+    setIsModalOpen(false);
+
+    const fetchEvent = async () => {
+      try {
+        // --- ¡ÚNICA FUENTE DE VERDAD! ---
+        // Obtenemos todo de Supabase, incluyendo 'trailer_url'
+        const { data: eventData, error: eventError } = await supabase
+          .from('events')
+          .select('*')
+          .eq('id', id)
+          .single();
+        
+        if (eventError) throw eventError;
+        if (!eventData) throw new Error('Evento no encontrado');
+        
+        setEvent(eventData);
+
+        // --- LÓGICA DE TRÁILER ELIMINADA DE AQUÍ ---
+
+      } catch (err) {
+        console.error("Error al cargar evento:", err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+        // setLoadingTrailer(false); // ELIMINADO
+      }
+    };
+    fetchEvent();
+  }, [id]); // Dependencias simplificadas
+
+  // --- Efecto 2: Cargar Relacionados (Sin cambios) ---
+  useEffect(() => {
+// ... existing code ...
+    if (!event || !event.genres || event.genres.length === 0) {
+      setRelatedLoading(false);
+      return;
+    }
+// ... existing code ...
+    const fetchRelated = async () => {
+      setRelatedLoading(true);
+      const today = new Date().toISOString();
+// ... existing code ...
+      try {
+        const { data, error } = await supabase
+          .from('events')
+          .select('*')
+// ... existing code ...
+          .overlaps('genres', event.genres)
+          .neq('id', event.id)
+          .gte('release_date', today)
+// ... existing code ...
+          .order('release_date', { ascending: true })
+          .limit(3);
+        if (error) throw error;
+        setRelatedEvents(data);
+// ... existing code ...
+      } catch (err) {
+        console.error("Error al cargar eventos relacionados:", err);
+      } finally {
+        setRelatedLoading(false);
+// ... existing code ...
+      }
+    };
+    fetchRelated();
+  }, [event]);
+
+  // --- Lógica de Botones (Sin cambios) ---
+  const getEventDetails = (type) => {
+// ... existing code ...
+    switch (type) {
+      case 'movie': return { icon: <Film size={16} className="inline-block" />, label: 'Película' };
+      case 'tv': return { icon: <Monitor size={16} className="inline-block" />, label: 'Serie' };
+// ... existing code ...
+      default: return { icon: <Calendar size={16} className="inline-block" />, label: 'Evento' };
+    }
+  };
+// ... existing code ...
+  const eventInfo = event ? getEventDetails(event.type) : {};
+
+  const handleFavoriteClick = () => {
+// ... existing code ...
+    if (isCurrentlyFavorite) {
+      removeFavorite(eventIdAsNumber);
+    } else {
+// ... existing code ...
+      addFavorite(eventIdAsNumber);
+    }
+  };
+
+  const handleWatchedClick = () => {
+    if (isCurrentlyWatched) {
+// ... existing code ...
+      removeWatched(eventIdAsNumber);
+    } else {
+      addWatched(eventIdAsNumber);
+// ... existing code ...
+    }
+  };
+
+  // --- ¡MANEJADOR DE TRÁILER SIMPLIFICADO! ---
+  const handleTrailerClick = () => {
+    // Si el evento existe Y tiene una trailer_url, abrimos el modal
+    if (event && event.trailer_url) {
+      setIsModalOpen(true);
+    }
+    // No hay 'else' - si no hay URL, el botón estará deshabilitado
+  };
+
+  // --- Renderizado ---
+  if (loading) {
+// ... existing code ...
+    return <div className="text-center py-20 text-subtle text-lg">Cargando...</div>;
+  }
+  if (error) {
+// ... existing code ...
+    return (
+      <div className="text-center py-20">
+        <h2 className="text-2xl font-bold text-critical mb-4">Error: Evento no encontrado</h2>
+        <p className="text-subtle mb-6">{error}</p>
+        <Link 
+          to="/app" 
+          className="text-action-primary font-medium hover:underline"
+        >
+          Volver al inicio
+        </Link>
+      </div>
+    );
+  }
+  if (!event || !countdown) return null;
+
+  const releaseDate = new Date(event.release_date).toLocaleDateString('es-ES', {
+// ... existing code ...
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+  });
+
+  // --- ¡NUEVA LÓGICA DE BOTÓN! ---
+  // Basada directamente en event.trailer_url
+  const hasTrailer = event && event.trailer_url;
+  
+  let trailerButtonText = hasTrailer ? 'Ver Tráiler' : 'Tráiler no disponible';
+  let trailerButtonIcon = <PlayCircle size={20} className="mr-2" />;
+  let trailerButtonClass = hasTrailer
+    ? 'bg-action-primary text-white hover:bg-action-primary-hover' // Clicable
+    : 'bg-subtle text-gray-t500 cursor-not-allowed'; // Deshabilitado
+
+  return (
+    <>
+      {/* --- ¡MODAL ACTUALIZADO! --- */}
+      {isModalOpen && event.trailer_url && (
+        <VideoModal trailerUrl={event.trailer_url} onClose={() => setIsModalOpen(false)} />
+      )}
+    
+      <div className="max-w-5xl mx-auto">
+        
+        <div className="w-full h-48 md:h-80 lg:h-96 relative">
+{/* ... existing code ... */}
+          <div
+            className="w-full h-full bg-cover bg-center rounded-lg shadow-lg"
+            style={{ backgroundImage: `url(${event.image_url})` }}
+// ... existing code ...
+            onError={(e) => { e.target.style.backgroundImage = "url('https://placehold.co/1200x500/0C0D0F/E6E7EB?text=ClicTimes')"; }}
+          ></div>
+          <div className="absolute bottom-0 left-0 w-full h-1/3 bg-gradient-to-t from-bg-default"></div>
+        </div>
+
+        <div className="relative p-6 -mt-20 md:-mt-32">
+          <div className="flex flex-col md:flex-row bg-white rounded-lg shadow-xl overflow-hidden">
+            <div className="w-full md:w-1/3 flex-shrink-0">
+              <img 
+                src={event.poster_image_url} 
+// ... existing code ...
+                alt={`Póster de ${event.title}`}
+                className="w-full h-auto object-cover"
+                onError={(e) => { e.target.onerror = null; e.target.src="https://placehold.co/500x750/0C0D0F/E6E7EB?text=ClicTimes"; }}
+// ... existing code ...
+              />
+            </div>
+            <div className="p-6 md:p-8 flex flex-col justify-center w-full">
+              <span 
+                className={`inline-block w-auto px-3 py-1 rounded-full text-sm font-semibold mb-3 ${
+// ... existing code ...
+                  event.type === 'tv' ? 'bg-success-subtle text-success' : 'bg-brand-subtle text-action-primary'
+                }`}
+              >
+// ... existing code ...
+                {eventInfo.icon} {eventInfo.label}
+              </span>
+
+              <h1 className="text-3xl md:text-5xl font-extrabold text-default mb-4">
+// ... existing code ...
+                {event.title}
+              </h1>
+
+              <div className="flex items-center text-subtle text-md mb-2">
+                <Calendar size={18} className="mr-2 flex-shrink-0" />
+// ... existing code ...
+                <span className="flex items-center flex-wrap">
+                  {releaseDate}
+                  <span className="flex items-center ml-2 mt-1 md:mt-0 bg-muted text-subtle text-xs font-medium px-2 py-0.5 rounded-full">
+// ... existing code ...
+                    <MapPin size={12} className="mr-1" />
+                    Estreno MX
+                  </span>
+                </span>
+              </div>
+              <div className="flex items-center text-subtle text-md mb-6">
+                <PlayCircle size={18} className="mr-2 flex-shrink-0" />
+                {/* --- ¡Mostramos la plataforma dinámica! --- */}
+                <span>{event.platform || 'Plataforma no anunciada'}</span>
+              </div>
+
+              {event.genres && event.genres.length > 0 && (
+// ... existing code ...
+                <div className="mb-6">
+                  <h3 className="text-sm font-semibold text-default uppercase mb-2">Géneros</h3>
+                  <div className="flex flex-wrap gap-2">
+// ... existing code ...
+                    {event.genres.map(genre => (
+                      <span key={genre} className="inline-block bg-muted text-subtle text-xs font-medium px-3 py-1 rounded-full">
+                        {genre}
+                      </span>
+// ... existing code ...
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* --- ¡BOTONES DE ACCIÓN ACTUALIZADOS! --- */}
+              <div className="flex flex-col sm:flex-row gap-3 mt-auto">
+                {/* Botón de Tráiler */}
+                <button
+                  onClick={handleTrailerClick} 
+                  disabled={!hasTrailer} // ¡Deshabilitado si no hay tráiler!
+                  className={`flex-1 flex items-center justify-center text-lg font-medium py-3 px-5 rounded-lg transition-colors duration-200 shadow-md
+                    ${trailerButtonClass}
+                  `}
+                >
+                  {trailerButtonIcon}
+                  {trailerButtonText}
+                </button>
+                
+                {/* Botones de Usuario (si está logueado) */}
+                {user && (
+                  <div className="flex gap-3">
+                    
+                    {/* Botón de Guardar (Estrella) */}
+                    <button
+                      onClick={handleFavoriteClick}
+// ... existing code ...
+                      disabled={loadingFavorites}
+                      className={`flex items-center justify-center p-3 rounded-lg transition-colors duration-200 shadow-md disabled:opacity-50
+                        ${isCurrentlyFavorite
+// ... existing code ...
+                          ? 'bg-critical-subtle text-text-critical hover:bg-critical-subtle' 
+                          : 'bg-muted text-subtle hover:bg-subtle'
+                        }`}
+// ... existing code ...
+                      aria-label={isCurrentlyFavorite ? "Quitar de Mi Lista" : "Guardar en Mi Lista"}
+                    >
+                      <Star 
+                        size={24} 
+// ... existing code ...
+                        fill={isCurrentlyFavorite ? '#F6B5B6' : 'none'} 
+                      />
+                    </button>
+                    
+                    {/* Botón de Visto (Ojo) */}
+                    <button
+                      onClick={handleWatchedClick}
+// ... existing code ...
+                      disabled={loadingWatched}
+                      className={`flex items-center justify-center p-3 rounded-lg transition-colors duration-200 shadow-md disabled:opacity-50
+                        ${isCurrentlyWatched
+                          ? 'bg-info-subtle text-text-info hover:bg-info-subtle' 
+// ... existing code ...
+                          : 'bg-muted text-subtle hover:bg-subtle'
+                        }`}
+                      aria-label={isCurrentlyWatched ? "Quitar de Vistos" : "Marcar como Visto"}
+                    >
+                      <Eye 
+                        size={24}
+                        fill={isCurrentlyWatched ? '#85D1F6' : 'none'} 
+                      />
+                    </button>
+                  </div>
+                )}
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        {/* --- Cuenta Regresiva (Sin cambios) --- */}
+        <div className="bg-white shadow-md rounded-lg p-6 md:p-8 mt-8">
+// ... existing code ...
+          {countdown.isPast ? (
+            <div className="text-center">
+              <h2 className="text-3xl font-bold text-success">¡Ya se estrenó!</h2>
+            </div>
+// ... existing code ...
+          ) : (
+            <div>
+              <h2 className="text-2xl font-bold text-default text-center mb-6">
+// ... existing code ...
+                Cuenta Regresiva
+              </h2>
+              <div className="flex justify-center text-center space-x-4 md:space-x-10">
+                <div className="w-20 md:w-28"><span className="text-4xl md:text-6xl font-extrabold text-action-primary block">{countdown.days}</span><span className="text-sm text-subtle uppercase">Días</span></div>
+                <div className="w-20 md:w-28"><span className="text-4xl md:text-6xl font-extrabold text-action-primary block">{countdown.hours}</span><span className="text-sm text-subtle uppercase">Horas</span></div>
+                <div className="w-20 md:w-28"><span className="text-4xl md:text-6xl font-extrabold text-action-primary block">{countdown.minutes}</span><span className="text-sm text-subtle uppercase">Minutos</span></div>
+                <div className="w-20 md:w-28"><span className="text-4xl md:text-6xl font-extrabold text-subtle block">{countdown.seconds}</span><span className="text-sm text-subtle uppercase">Segundos</span></div>
+// ... existing code ...
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* --- Sinopsis (Sin cambios) --- */}
+        <div className="bg-white shadow-md rounded-lg p-6 md:p-8 mt-8 mb-8">
+// ... existing code ...
+          <h3 className="text-2xl font-bold text-default mb-4">Sinopsis</h3>
+          <p className="text-subtle leading-relaxed text-md">
+            {event.description || 'Sinopsis no disponible por el momento.'}
+// ... existing code ...
+          </p>
+        </div>
+
+        {/* --- Relacionados (Sin cambios) --- */}
+        {!relatedLoading && relatedEvents.length > 0 && (
+// ... existing code ...
+          <div className="mt-8 mb-8">
+            <h3 className="text-3xl font-bold text-default mb-6">
+              También te podría interesar
+// ... existing code ...
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+              {relatedEvents.map(item => (
+                <CountdownCard key={item.id} item={item} />
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+
+export default DetailPage;
