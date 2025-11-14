@@ -1,7 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 // Importamos los iconos que usaremos
-import { Check, Star, Bell, ListTodo, Newspaper, ArrowRight } from 'lucide-react';
+// --- ¡NUEVOS ICONOS AÑADIDOS! ---
+import { Check, Star, Bell, ListTodo, Newspaper, ArrowRight, LogIn, UserPlus } from 'lucide-react';
 import Footer from '../Footer.jsx'; // Importamos el footer principal
 
 // Este es un mini-header solo para la Landing Page
@@ -13,25 +14,34 @@ function LandingHeader() {
           <span className="text-brand-t450">Clic</span>
           <span className="text-gray-t0 ml-0.5">Times</span>
         </Link>
-        {/* --- ¡CORRECCIÓN MÓVIL! --- 
-            Cambiamos "space-x-4" por "flex flex-wrap justify-end gap-3"
-            - flex: lo convierte en contenedor flexible
-            - flex-wrap: ¡Permite que los botones bajen si no caben!
-            - justify-end: Los alinea a la derecha
-            - gap-3: Añade espacio entre ellos (horizontal y vertical)
+        {/* El contenedor 'gap-3' ahora acomodará los iconos en móvil 
+          y el texto en desktop.
         */}
         <div className="flex flex-wrap justify-end gap-3">
+          {/* --- ¡BOTÓN DE LOGIN MODIFICADO! --- */}
           <Link 
             to="/app/login" 
-            className="font-medium text-subtle transition-colors duration-200 py-2 px-3 rounded-lg hover:bg-muted"
+            // Padding ajustado: px-2 en móvil (para icono), md:px-3 en desktop (para texto)
+            className="font-medium text-subtle transition-colors duration-200 py-2 rounded-lg hover:bg-muted md:px-3 px-2"
+            aria-label="Iniciar Sesión"
           >
-            Iniciar Sesión
+            {/* Icono (solo visible en móvil) */}
+            <LogIn size={20} className="block md:hidden" />
+            {/* Texto (oculto en móvil) */}
+            <span className="hidden md:block">Iniciar Sesión</span>
           </Link>
+          
+          {/* --- ¡BOTÓN DE REGISTRO MODIFICADO! --- */}
           <Link 
             to="/app/register" 
-            className="font-medium bg-action-primary text-white transition-colors duration-200 py-2 px-4 rounded-lg hover:bg-action-primary-hover"
+            // Padding ajustado: px-2 en móvil (para icono), md:px-4 en desktop (para texto)
+            className="font-medium bg-action-primary text-white transition-colors duration-200 py-2 rounded-lg hover:bg-action-primary-hover md:px-4 px-2"
+            aria-label="Crear Cuenta"
           >
-            Crear Cuenta
+            {/* Icono (solo visible en móvil) */}
+            <UserPlus size={20} className="block md:hidden" />
+            {/* Texto (oculto en móvil) */}
+            <span className="hidden md:block">Crear Cuenta</span>
           </Link>
         </div>
       </nav>

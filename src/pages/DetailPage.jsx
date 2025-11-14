@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { supabase } from '../supabaseClient';
+// --- ¡CORRECCIÓN! Se añaden las extensiones .js y .jsx ---
+import { supabase } from '../supabaseClient.js';
 import { Calendar, Monitor, Film, PlayCircle, MapPin, Star, X, Eye } from 'lucide-react';
-import CountdownCard from '../components/CountdownCard';
-import { useFavorites } from '../hooks/useFavorites';
-import { useAuth } from '../hooks/useAuth';
-import { useWatchedHistory } from '../hooks/useWatchedHistory';
+import CountdownCard from '../components/CountdownCard.jsx';
+import { useFavorites } from '../hooks/useFavorites.js';
+import { useAuth } from '../hooks/useAuth.js';
+import { useWatchedHistory } from '../hooks/useWatchedHistory.js';
 
 // --- Hook para el contador ---
 function useCountdown(targetDate) {
@@ -38,8 +39,9 @@ function useCountdown(targetDate) {
 // --- Ayudante para extraer el ID de video de una URL de YouTube ---
 function getYouTubeID(url) {
   if (!url) return null;
-  // Expresión regular corregida (sin escape innecesario en &)
-  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+  // --- ¡CORRECCIÓN DE LINTING AQUÍ! ---
+  // Se quitaron los '\' innecesarios de '&' y '?' dentro de los corchetes [].
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
   const match = url.match(regExp);
   return (match && match[2].length === 11) ? match[2] : null;
 }
@@ -284,24 +286,39 @@ function DetailPage() {
                 {event.title}
               </h1>
 
-              <div className="flex items-center text-subtle text-md mb-2">
-                <Calendar size={18} className="mr-2 flex-shrink-0" />
-                <span className="flex items-center flex-wrap">
-                  {releaseDate}
-                  <span className="flex items-center ml-2 mt-1 md:mt-0 bg-muted text-subtle text-xs font-medium px-2 py-0.5 rounded-full">
-                    <MapPin size={12} className="mr-1" />
-                    Estreno MX
+              {/* --- ¡INICIO DE CORRECCIÓN DE LAYOUT! --- */}
+              {/* Usamos flex-col para apilar las secciones de información */}
+              <div className="flex flex-col gap-4 mb-6">
+                
+                {/* Sección de Fecha */}
+                <div className="flex items-center text-subtle text-md">
+                  <Calendar size={18} className="mr-3 flex-shrink-0" />
+                  <div className="flex flex-col">
+                    {/* El texto principal */}
+                    <span className="text-default font-medium">{releaseDate}</span>
+                    {/* El tag "Estreno MX" debajo */}
+                    <span className="flex items-center text-subtle text-xs font-medium">
+                      <MapPin size={12} className="mr-1" />
+                      Estreno MX
+                    </span>
+                  </div>
+                </div>
+
+                {/* Sección de Plataforma */}
+                <div className="flex items-center text-subtle text-md">
+                  <PlayCircle size={18} className="mr-3 flex-shrink-0" />
+                  <span className="text-default font-medium">
+                    {event.platform || 'Plataforma no anunciada'}
                   </span>
-                </span>
+                </div>
               </div>
-              <div className="flex items-center text-subtle text-md mb-6">
-                <PlayCircle size={18} className="mr-2 flex-shrink-0" />
-                <span>{event.platform || 'Plataforma no anunciada'}</span>
-              </div>
+              {/* --- FIN DE CORRECCIÓN DE LAYOUT --- */}
+
 
               {event.genres && event.genres.length > 0 && (
                 <div className="mb-6">
-                  <h3 className="text-sm font-semibold text-default uppercase mb-2">Géneros</h3>
+                  <h3 className="text-sm font-semibold text-default uppercase mb-3">Géneros</h3>
+                  {/* Usamos flex-wrap para que los géneros bajen si no caben */}
                   <div className="flex flex-wrap gap-2">
                     {event.genres.map(genre => (
                       <span key={genre} className="inline-block bg-muted text-subtle text-xs font-medium px-3 py-1 rounded-full">
