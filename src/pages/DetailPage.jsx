@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-// --- ¡CORRECCIÓN! Se añaden las extensiones .js y .jsx ---
 import { supabase } from '../supabaseClient.js';
-import { Calendar, Monitor, Film, PlayCircle, MapPin, Star, X, Eye } from 'lucide-react';
+import { Calendar, Monitor, Film, PlayCircle, MapPin, Star, X, Eye, Share2 } from 'lucide-react';
 import CountdownCard from '../components/CountdownCard.jsx';
 import { useFavorites } from '../hooks/useFavorites.js';
 import { useAuth } from '../hooks/useAuth.js';
@@ -39,8 +38,7 @@ function useCountdown(targetDate) {
 // --- Ayudante para extraer el ID de video de una URL de YouTube ---
 function getYouTubeID(url) {
   if (!url) return null;
-  // --- ¡CORRECCIÓN DE LINTING AQUÍ! ---
-  // Se quitaron los '\' innecesarios de '&' y '?' dentro de los corchetes [].
+  // Expresión regular corregida (sin escapes innecesarios)
   const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
   const match = url.match(regExp);
   return (match && match[2].length === 11) ? match[2] : null;
@@ -88,13 +86,14 @@ function VideoModal({ trailerUrl, onClose }) {
 
 
 function DetailPage() {
-  const { id } = useParams(); // <- Obtiene el :id de la URL /app/event/:id
+  const { id } = useParams();
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [relatedEvents, setRelatedEvents] = useState([]);
   const [relatedLoading, setRelatedLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showCopyMessage, setShowCopyMessage] = useState(false);
 
   const countdown = useCountdown(event?.release_date);
   const { user } = useAuth();
@@ -102,53 +101,42 @@ function DetailPage() {
   const { addFavorite, removeFavorite, isFavorite, loadingFavorites } = useFavorites();
   const { addWatched, removeWatched, isWatched, loadingWatched } = useWatchedHistory();
   
-  // *** ¡IMPORTANTE! ***
-  // Convertimos el ID a número. Si 'id' es undefined, eventIdAsNumber será NaN.
   const eventIdAsNumber = Number(id); 
   const isCurrentlyFavorite = isFavorite(eventIdAsNumber);
   const isCurrentlyWatched = isWatched(eventIdAsNumber);
 
   // --- Efecto 1: Cargar datos del Evento ---
   useEffect(() => {
-    // *** ¡CORRECCIÓN CLAVE! ***
-    // Si el ID no es un número válido (es undefined o NaN), no intentes buscar.
     if (!id || isNaN(eventIdAsNumber)) {
       setError('ID de evento no válido.');
       setLoading(false);
-      return; // No ejecutes la búsqueda
+      return;
     }
-
     setLoading(true);
     setError(null);
     setEvent(null);
     setRelatedEvents([]);
     setRelatedLoading(true);
     setIsModalOpen(false);
-
     const fetchEvent = async () => {
       try {
         const { data: eventData, error: eventError } = await supabase
           .from('events')
           .select('*')
-          .eq('id', eventIdAsNumber) // Usamos el ID numérico
+          .eq('id', eventIdAsNumber)
           .single();
-        
         if (eventError) throw eventError;
         if (!eventData) throw new Error('Evento no encontrado');
-        
         setEvent(eventData);
-
       } catch (err) {
         console.error("Error al cargar evento:", err);
-        // Aquí es donde tu error "Evento no encontrado" se estaba generando
-        // si el error de Supabase (bigint) ocurría.
         setError(err.message); 
       } finally {
         setLoading(false);
       }
     };
     fetchEvent();
-  }, [id, eventIdAsNumber]); // Dependemos del ID y su versión numérica
+  }, [id, eventIdAsNumber]);
 
   // --- Efecto 2: Cargar Relacionados ---
   useEffect(() => {
@@ -211,12 +199,30 @@ function DetailPage() {
     }
   };
 
+  // --- Lógica para Compartir ---
+  const handleShare = async () => {
+    const shareData = {
+      title: event.title,
+      text: `¡Mira el próximo estreno de ${event.title} en ClicTimes!`,
+      url: window.location.href,
+    };
+    try {
+      if (navigator.share && navigator.canShare(shareData)) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        setShowCopyMessage(true);
+        setTimeout(() => setShowCopyMessage(false), 3000);
+      }
+    } catch (error) {
+      console.error("Error al compartir:", error);
+    }
+  };
+  
   // --- Renderizado ---
   if (loading) {
     return <div className="text-center py-20 text-subtle text-lg">Cargando...</div>;
   }
-
-  // Si hay un error (incluyendo el ID no válido)
   if (error) {
     return (
       <div className="text-center py-20">
@@ -231,8 +237,6 @@ function DetailPage() {
       </div>
     );
   }
-  
-  // Si no está cargando, no hay error, pero no hay evento o countdown (poco probable)
   if (!event || !countdown) return null;
 
   const releaseDate = new Date(event.release_date).toLocaleDateString('es-ES', {
@@ -251,9 +255,16 @@ function DetailPage() {
       {isModalOpen && event.trailer_url && (
         <VideoModal trailerUrl={event.trailer_url} onClose={() => setIsModalOpen(false)} />
       )}
+      
+      {showCopyMessage && (
+        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] bg-success text-white px-4 py-2 rounded-lg shadow-lg">
+          ¡Enlace copiado al portapapeles!
+        </div>
+      )}
     
       <div className="max-w-5xl mx-auto">
         
+        {/* --- Imagen de fondo --- */}
         <div className="w-full h-48 md:h-80 lg:h-96 relative">
           <div
             className="w-full h-full bg-cover bg-center rounded-lg shadow-lg"
@@ -265,6 +276,7 @@ function DetailPage() {
 
         <div className="relative p-6 -mt-20 md:-mt-32">
           <div className="flex flex-col md:flex-row bg-white rounded-lg shadow-xl overflow-hidden">
+            {/* --- Imagen de póster --- */}
             <div className="w-full md:w-1/3 flex-shrink-0">
               <img 
                 src={event.poster_image_url} 
@@ -273,7 +285,9 @@ function DetailPage() {
                 onError={(e) => { e.target.onerror = null; e.target.src="https://placehold.co/500x750/0C0D0F/E6E7EB?text=ClicTimes"; }}
               />
             </div>
+            
             <div className="p-6 md:p-8 flex flex-col justify-center w-full">
+              {/* --- Tipo, Título, Info --- */}
               <span 
                 className={`inline-block w-auto px-3 py-1 rounded-full text-sm font-semibold mb-3 ${
                   event.type === 'tv' ? 'bg-success-subtle text-success' : 'bg-brand-subtle text-action-primary'
@@ -282,44 +296,42 @@ function DetailPage() {
                 {eventInfo.icon} {eventInfo.label}
               </span>
 
-              <h1 className="text-3xl md:text-5xl font-extrabold text-default mb-4">
+              {/* --- ¡CORRECCIÓN DE FUENTE! (Móvil más pequeño) --- */}
+              <h1 className="text-2xl md:text-4xl font-extrabold text-default mb-4">
                 {event.title}
               </h1>
 
-              {/* --- ¡INICIO DE CORRECCIÓN DE LAYOUT! --- */}
-              {/* Usamos flex-col para apilar las secciones de información */}
+              {/* --- Sección de Info (Fecha, Plataforma) --- */}
+              {/* --- ¡CORRECCIÓN DE FUENTE! (text-md -> text-base) --- */}
               <div className="flex flex-col gap-4 mb-6">
-                
-                {/* Sección de Fecha */}
-                <div className="flex items-center text-subtle text-md">
+                <div className="flex items-center text-subtle text-base">
                   <Calendar size={18} className="mr-3 flex-shrink-0" />
                   <div className="flex flex-col">
-                    {/* El texto principal */}
                     <span className="text-default font-medium">{releaseDate}</span>
-                    {/* El tag "Estreno MX" debajo */}
                     <span className="flex items-center text-subtle text-xs font-medium">
                       <MapPin size={12} className="mr-1" />
                       Estreno MX
                     </span>
                   </div>
                 </div>
-
-                {/* Sección de Plataforma */}
-                <div className="flex items-center text-subtle text-md">
+                {/* --- ¡CORRECCIÓN DE FUENTE! (text-md -> text-base) --- */}
+                <div className="flex items-center text-subtle text-base">
                   <PlayCircle size={18} className="mr-3 flex-shrink-0" />
                   <span className="text-default font-medium">
                     {event.platform || 'Plataforma no anunciada'}
                   </span>
                 </div>
               </div>
-              {/* --- FIN DE CORRECCIÓN DE LAYOUT --- */}
 
-
+              {/* --- Sección de Géneros (Píldoras) --- */}
               {event.genres && event.genres.length > 0 && (
                 <div className="mb-6">
-                  <h3 className="text-sm font-semibold text-default uppercase mb-3">Géneros</h3>
-                  {/* Usamos flex-wrap para que los géneros bajen si no caben */}
+                  {/* --- ¡CORRECCIÓN DE FUENTE! (text-sm para el título) --- */}
+                  <h3 className="text-sm font-semibold text-default uppercase mb-3">
+                    Géneros
+                  </h3>
                   <div className="flex flex-wrap gap-2">
+                    {/* --- ¡CORRECCIÓN DE FUENTE! (text-xs para las píldoras) --- */}
                     {event.genres.map(genre => (
                       <span key={genre} className="inline-block bg-muted text-subtle text-xs font-medium px-3 py-1 rounded-full">
                         {genre}
@@ -329,11 +341,13 @@ function DetailPage() {
                 </div>
               )}
 
-              <div className="flex flex-col sm:flex-row gap-3 mt-auto">
+              {/* --- Layout de Botones Corregido --- */}
+              <div className="flex flex-col gap-3 mt-auto">
+                {/* Botón de Tráiler (Siempre 100% ancho) */}
                 <button
                   onClick={handleTrailerClick} 
                   disabled={!hasTrailer}
-                  className={`flex-1 flex items-center justify-center text-lg font-medium py-3 px-5 rounded-lg transition-colors duration-200 shadow-md
+                  className={`flex w-full items-center justify-center text-lg font-medium py-3 px-5 rounded-lg transition-colors duration-200 shadow-md
                     ${trailerButtonClass}
                   `}
                 >
@@ -341,47 +355,64 @@ function DetailPage() {
                   {trailerButtonText}
                 </button>
                 
-                {user && (
-                  <div className="flex gap-3">
-                    <button
-                      onClick={handleFavoriteClick}
-                      disabled={loadingFavorites}
-                      className={`flex items-center justify-center p-3 rounded-lg transition-colors duration-200 shadow-md disabled:opacity-50
-                        ${isCurrentlyFavorite
-                          ? 'bg-critical-subtle text-text-critical hover:bg-critical-subtle' 
-                          : 'bg-muted text-subtle hover:bg-subtle'
-                        }`}
-                      aria-label={isCurrentlyFavorite ? "Quitar de Mi Lista" : "Guardar en Mi Lista"}
-                    >
-                      <Star 
-                        size={24} 
-                        fill={isCurrentlyFavorite ? '#F6B5B6' : 'none'} 
-                      />
-                    </button>
-                    
-                    <button
-                      onClick={handleWatchedClick}
-                      disabled={loadingWatched}
-                      className={`flex items-center justify-center p-3 rounded-lg transition-colors duration-200 shadow-md disabled:opacity-50
-                        ${isCurrentlyWatched
-                          ? 'bg-info-subtle text-text-info hover:bg-info-subtle' 
-                          : 'bg-muted text-subtle hover:bg-subtle'
-                        }`}
-                      aria-label={isCurrentlyWatched ? "Quitar de Vistos" : "Marcar como Visto"}
-                    >
-                      <Eye 
-                        size={24}
-                        fill={isCurrentlyWatched ? '#85D1F6' : 'none'} 
-                      />
-                    </button>
-                  </div>
-                )}
+                {/* Fila secundaria de botones (Compartir, Lista, Visto) */}
+                <div className="flex gap-3">
+                  
+                  {/* Botón de Compartir (Toma el espacio principal) */}
+                  <button
+                    onClick={handleShare}
+                    className="flex-1 flex items-center justify-center p-3 rounded-lg transition-colors duration-200 shadow-md bg-muted text-subtle hover:bg-subtle"
+                    aria-label="Compartir"
+                  >
+                    <Share2 size={24} />
+                    {/* Texto extra para móvil */}
+                    <span className="sm:hidden ml-2 font-medium">Compartir</span>
+                  </button>
+                  
+                  {/* Botones de Usuario (si está logueado) */}
+                  {user && (
+                    <>
+                      <button
+                        onClick={handleFavoriteClick}
+                        disabled={loadingFavorites}
+                        className={`flex items-center justify-center p-3 rounded-lg transition-colors duration-200 shadow-md disabled:opacity-50
+                          ${isCurrentlyFavorite
+                            ? 'bg-critical-subtle text-text-critical hover:bg-critical-subtle' 
+                            : 'bg-muted text-subtle hover:bg-subtle'
+                          }`}
+                        aria-label={isCurrentlyFavorite ? "Quitar de Mi Lista" : "Guardar en Mi Lista"}
+                      >
+                        <Star 
+                          size={24} 
+                          fill={isCurrentlyFavorite ? '#F6B5B6' : 'none'} 
+                        />
+                      </button>
+                      
+                      <button
+                        onClick={handleWatchedClick}
+                        disabled={loadingWatched}
+                        className={`flex items-center justify-center p-3 rounded-lg transition-colors duration-200 shadow-md disabled:opacity-50
+                          ${isCurrentlyWatched
+                            ? 'bg-info-subtle text-text-info hover:bg-info-subtle' 
+                            : 'bg-muted text-subtle hover:bg-subtle'
+                          }`}
+                        aria-label={isCurrentlyWatched ? "Quitar de Vistos" : "Marcar como Visto"}
+                      >
+                        <Eye 
+                          size={24}
+                          fill={isCurrentlyWatched ? '#85D1F6' : 'none'} 
+                        />
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
 
             </div>
           </div>
         </div>
 
+        {/* --- Cuenta Regresiva --- */}
         <div className="bg-white shadow-md rounded-lg p-6 md:p-8 mt-8">
           {countdown.isPast ? (
             <div className="text-center">
@@ -402,13 +433,16 @@ function DetailPage() {
           )}
         </div>
 
+        {/* --- Sinopsis --- */}
         <div className="bg-white shadow-md rounded-lg p-6 md:p-8 mt-8 mb-8">
           <h3 className="text-2xl font-bold text-default mb-4">Sinopsis</h3>
-          <p className="text-subtle leading-relaxed text-md">
+          {/* --- ¡CORRECCIÓN DE FUENTE! (text-base) --- */}
+          <p className="text-subtle leading-relaxed text-base">
             {event.description || 'Sinopsis no disponible por el momento.'}
           </p>
         </div>
 
+        {/* --- Relacionados --- */}
         {!relatedLoading && relatedEvents.length > 0 && (
           <div className="mt-8 mb-8">
             <h3 className="text-3xl font-bold text-default mb-6">

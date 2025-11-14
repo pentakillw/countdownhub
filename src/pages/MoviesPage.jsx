@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
+// --- ¡CORRECCIÓN! Se añaden las extensiones .js y .jsx ---
 import { supabase } from '../supabaseClient.js';
 import CountdownCard from '../components/CountdownCard.jsx';
-// --- MEJORA FUNCIONAL: Añadimos 'SlidersHorizontal' ---
 import { Search, Filter, SlidersHorizontal } from 'lucide-react';
 
 function MoviesPage() {
@@ -15,8 +15,6 @@ function MoviesPage() {
   const [availablePlatforms, setAvailablePlatforms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  // --- MEJORA FUNCIONAL: Estado para controlar el desplegable ---
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
 
   // Efecto 1: Cargar Datos (SOLO PELÍCULAS)
@@ -31,7 +29,7 @@ function MoviesPage() {
         const { data, error } = await supabase
           .from('events')
           .select('*')
-          .eq('type', 'movie')
+          .eq('type', 'movie') // <-- Solo Películas
           .gte('release_date', todayISO)
           .order('release_date', { ascending: true });
         if (error) throw error;
@@ -111,46 +109,44 @@ function MoviesPage() {
 
   return (
     <div>
-      {/* --- MEJORA FUNCIONAL: Título y botón de filtros separados --- */}
-      <div className="flex justify-between items-center mb-6">
+      {/* --- Título y Botón de Filtros --- */}
+      <div className="flex justify-between items-center mb-4">
         <h1 className="text-3xl md:text-4xl font-bold text-default">
           Películas
         </h1>
         <button
           onClick={() => setIsFiltersOpen(!isFiltersOpen)}
-          // --- CORRECCIÓN: Borde cambiado a gris muy claro (t900) ---
           className="flex items-center gap-2 px-4 py-2 font-medium bg-white text-subtle rounded-lg shadow-sm border border-gray-t900 hover:bg-muted hover:text-default transition-colors"
           aria-label="Mostrar/Ocultar filtros"
         >
           <SlidersHorizontal size={20} />
-          <span>Filtros</span>
+          <span className="hidden sm:inline">Filtros</span>
         </button>
       </div>
 
-      {/* --- MEJORA FUNCIONAL: Filtros desplegables --- */}
+      {/* --- Barra de Búsqueda Visible --- */}
+      <div className="relative mb-6">
+        <label htmlFor="search-movies" className="sr-only">Buscar por título</label>
+        <input
+          type="text"
+          id="search-movies"
+          placeholder="Buscar por título... (Ej: Beetlejuice 2)"
+          className="w-full pl-10 pr-4 py-3 border border-gray-t900 rounded-lg focus:ring-2 focus:ring-action-primary focus:outline-none"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+        <Search size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-subtle" />
+      </div>
+
+      {/* --- Filtros Desplegables (Sin la búsqueda) --- */}
       {isFiltersOpen && (
         <div className="mb-8 p-4 bg-white shadow-md rounded-lg filters-slide-down">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             
             <div className="relative">
-              <label htmlFor="search" className="block text-sm font-medium text-subtle mb-1">Buscar por título</label>
-              <input
-                type="text"
-                id="search"
-                placeholder="Ej: Beetlejuice 2..."
-                // --- CORRECCIÓN: Borde cambiado a gris muy claro (t900) ---
-                className="w-full pl-10 pr-4 py-2 border border-gray-t900 rounded-lg focus:ring-2 focus:ring-action-primary focus:outline-none"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-              <Search size={20} className="absolute left-3 top-9 text-subtle" />
-            </div>
-
-            <div className="relative">
-              <label htmlFor="genre" className="block text-sm font-medium text-subtle mb-1">Género</label>
+              <label htmlFor="genre-movies" className="block text-sm font-medium text-subtle mb-1">Género</label>
               <select
-                id="genre"
-                // --- CORRECCIÓN: Borde cambiado a gris muy claro (t900) ---
+                id="genre-movies"
                 className="w-full pl-10 pr-4 py-2 border border-gray-t900 rounded-lg appearance-none focus:ring-2 focus:ring-action-primary focus:outline-none"
                 value={selectedGenre}
                 onChange={(e) => setSelectedGenre(e.target.value)}
@@ -165,10 +161,9 @@ function MoviesPage() {
             </div>
             
             <div className="relative">
-              <label htmlFor="date" className="block text-sm font-medium text-subtle mb-1">Fecha de estreno</label>
+              <label htmlFor="date-movies" className="block text-sm font-medium text-subtle mb-1">Fecha de estreno</label>
               <select
-                id="date"
-                // --- CORRECCIÓN: Borde cambiado a gris muy claro (t900) ---
+                id="date-movies"
                 className="w-full pl-10 pr-4 py-2 border border-gray-t900 rounded-lg appearance-none focus:ring-2 focus:ring-action-primary focus:outline-none"
                 value={selectedDateFilter}
                 onChange={(e) => setSelectedDateFilter(e.target.value)}
@@ -182,10 +177,9 @@ function MoviesPage() {
             </div>
 
             <div className="relative">
-              <label htmlFor="platform" className="block text-sm font-medium text-subtle mb-1">Plataforma</label>
+              <label htmlFor="platform-movies" className="block text-sm font-medium text-subtle mb-1">Plataforma</label>
               <select
-                id="platform"
-                // --- CORRECCIÓN: Borde cambiado a gris muy claro (t900) ---
+                id="platform-movies"
                 className="w-full pl-10 pr-4 py-2 border border-gray-t900 rounded-lg appearance-none focus:ring-2 focus:ring-action-primary focus:outline-none"
                 value={selectedPlatform}
                 onChange={(e) => setSelectedPlatform(e.target.value)}
@@ -202,8 +196,8 @@ function MoviesPage() {
           </div>
         </div>
       )}
-      {/* --- FIN DE SECCIÓN DE FILTROS --- */}
 
+      {/* --- Contenido (Loading, Error, Grid) --- */}
       {loading && (
         <div className="text-center py-10">
           <p className="text-lg text-subtle">Cargando películas...</p>
