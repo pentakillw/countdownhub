@@ -15,8 +15,8 @@ export default function ThemeProvider({ children }) {
     if (storedTheme) {
       return storedTheme;
     }
-    // 3. Si no hay nada, usar la preferencia del sistema
-    return 'system';
+    // 3. ¡CAMBIO! Si no hay nada, usar 'light' como predeterminado
+    return 'light'; // Antes era 'system'
   });
 
   useEffect(() => {

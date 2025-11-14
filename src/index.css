@@ -59,9 +59,9 @@
     --color-border-warning-strong: #F2731D;
     --color-border-success-strong: #23C764;
 
-    --color-action-primary: #000165;    /* brand-t200 */
-    --color-action-primary-hover: #000179; /* brand-t250 */
-    --color-action-primary-pressed: #00018D; /* brand-t300 */
+    --color-action-primary: #0002CA;    /* brand-t200 */
+    --color-action-primary-hover: #0002CA; /* brand-t250 */
+    --color-action-primary-pressed: #0002CA; /* brand-t300 */
     --color-action-secondary: #3D414A;  /* gray-t200 */
     --color-action-secondary-pressed: #494E59; /* gray-t250 */
     --color-action-critical: #E84346;
@@ -76,7 +76,7 @@
     --color-bg-subtle: #25272C;         /* gray-t100 */
     --color-bg-strong: #F2F3F4;         /* gray-950 */
     --color-bg-inverse: #F2F3F4;        /* gray-950 */
-    --color-bg-brand-subtle: #000179;   /* brand-t550 */
+    --color-bg-brand-subtle: #0002CA;   /* brand-t550 */
     --color-bg-info-subtle: #12A4E9;    /* Más oscuro */
     --color-bg-success-subtle: #23C764; /* Más oscuro */
     --color-bg-warning-subtle: #F2731D; /* Más oscuro */
@@ -103,9 +103,9 @@
 
     /* --- ¡MODIFICACIONES AQUÍ! --- */
     /* Cambiamos de t650/t700/t750 a t600/t650/t700 */
-    --color-action-primary: #9624C7;    /* brand-t600 (Azul más intenso) */
-    --color-action-primary-hover: #9624C7; /* brand-t650 (Ahora es el hover) */
-    --color-action-primary-pressed: #9624C7; /* brand-t700 (Ahora es el pressed) */
+    --color-action-primary: #0002CA;    /* brand-t600 (Azul más intenso) */
+    --color-action-primary-hover: #1719CF; /* brand-t650 (Ahora es el hover) */
+    --color-action-primary-pressed: #0002CA; /* brand-t700 (Ahora es el pressed) */
     /* --- Fin de las modificacionesrgb(3, 3, 2)
 
     --color-action-secondary: #B6BAC4;  /* gray-t700 */
