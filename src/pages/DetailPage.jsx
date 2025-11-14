@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
-// Eliminamos 'Search', ya no se usa
 import { Calendar, Monitor, Film, PlayCircle, MapPin, Star, X, Eye } from 'lucide-react';
 import CountdownCard from '../components/CountdownCard';
 import { useFavorites } from '../hooks/useFavorites';
 import { useAuth } from '../hooks/useAuth';
 import { useWatchedHistory } from '../hooks/useWatchedHistory';
 
-// --- Hook para el contador (sin cambios) ---
+// --- Hook para el contador ---
 function useCountdown(targetDate) {
   const [timeLeft, setTimeLeft] = useState(null);
   useEffect(() => {
@@ -36,25 +35,20 @@ function useCountdown(targetDate) {
   return timeLeft;
 }
 
-// --- ¡NUEVA FUNCIÓN! ---
-// Ayudante para extraer el ID de video de una URL de YouTube
+// --- Ayudante para extraer el ID de video de una URL de YouTube ---
 function getYouTubeID(url) {
   if (!url) return null;
-  // Expresión regular para encontrar el ID en varios formatos de URL (watch, embed, short)
-  // --- ¡CORRECCIÓN AQUÍ! --- (Se quitó el escape '\' antes del '&')
+  // Expresión regular corregida (sin escape innecesario en &)
   const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
   const match = url.match(regExp);
   return (match && match[2].length === 11) ? match[2] : null;
 }
 
-// --- Componente del Modal de Video (Modificado) ---
-// Ahora acepta la URL completa y extrae el ID
+// --- Componente del Modal de Video ---
 function VideoModal({ trailerUrl, onClose }) {
   const videoId = getYouTubeID(trailerUrl);
 
   if (!videoId) {
-    // Si la URL es inválida, no mostramos el modal (o mostramos un error)
-    // Cerramos el modal por si acaso
     onClose();
     return null; 
   }
@@ -90,20 +84,14 @@ function VideoModal({ trailerUrl, onClose }) {
   );
 }
 
-// --- Lógica de Búsqueda de Tráiler (ELIMINADA) ---
-// ya no es necesaria en el frontend.
 
 function DetailPage() {
-  const { id } = useParams();
+  const { id } = useParams(); // <- Obtiene el :id de la URL /app/event/:id
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [relatedEvents, setRelatedEvents] = useState([]);
   const [relatedLoading, setRelatedLoading] = useState(true);
-
-  // --- ¡ESTADOS DE TRÁILER ELIMINADOS! ---
-  // const [trailerKey, setTrailerKey] = useState(null); // ELIMINADO
-  // const [loadingTrailer, setLoadingTrailer] = useState(true); // ELIMINADO
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const countdown = useCountdown(event?.release_date);
@@ -112,12 +100,22 @@ function DetailPage() {
   const { addFavorite, removeFavorite, isFavorite, loadingFavorites } = useFavorites();
   const { addWatched, removeWatched, isWatched, loadingWatched } = useWatchedHistory();
   
-  const eventIdAsNumber = Number(id);
+  // *** ¡IMPORTANTE! ***
+  // Convertimos el ID a número. Si 'id' es undefined, eventIdAsNumber será NaN.
+  const eventIdAsNumber = Number(id); 
   const isCurrentlyFavorite = isFavorite(eventIdAsNumber);
   const isCurrentlyWatched = isWatched(eventIdAsNumber);
 
-  // --- Efecto 1: Cargar datos del Evento (Simplificado) ---
+  // --- Efecto 1: Cargar datos del Evento ---
   useEffect(() => {
+    // *** ¡CORRECCIÓN CLAVE! ***
+    // Si el ID no es un número válido (es undefined o NaN), no intentes buscar.
+    if (!id || isNaN(eventIdAsNumber)) {
+      setError('ID de evento no válido.');
+      setLoading(false);
+      return; // No ejecutes la búsqueda
+    }
+
     setLoading(true);
     setError(null);
     setEvent(null);
@@ -127,12 +125,10 @@ function DetailPage() {
 
     const fetchEvent = async () => {
       try {
-        // --- ¡ÚNICA FUENTE DE VERDAD! ---
-        // Obtenemos todo de Supabase, incluyendo 'trailer_url'
         const { data: eventData, error: eventError } = await supabase
           .from('events')
           .select('*')
-          .eq('id', id)
+          .eq('id', eventIdAsNumber) // Usamos el ID numérico
           .single();
         
         if (eventError) throw eventError;
@@ -140,20 +136,19 @@ function DetailPage() {
         
         setEvent(eventData);
 
-        // --- LÓGICA DE TRÁILER ELIMINADA DE AQUÍ ---
-
       } catch (err) {
         console.error("Error al cargar evento:", err);
-        setError(err.message);
+        // Aquí es donde tu error "Evento no encontrado" se estaba generando
+        // si el error de Supabase (bigint) ocurría.
+        setError(err.message); 
       } finally {
         setLoading(false);
-        // setLoadingTrailer(false); // ELIMINADO
       }
     };
     fetchEvent();
-  }, [id]); // Dependencias simplificadas
+  }, [id, eventIdAsNumber]); // Dependemos del ID y su versión numérica
 
-  // --- Efecto 2: Cargar Relacionados (Sin cambios) ---
+  // --- Efecto 2: Cargar Relacionados ---
   useEffect(() => {
     if (!event || !event.genres || event.genres.length === 0) {
       setRelatedLoading(false);
@@ -182,7 +177,7 @@ function DetailPage() {
     fetchRelated();
   }, [event]);
 
-  // --- Lógica de Botones (Sin cambios) ---
+  // --- Lógica de Botones ---
   const getEventDetails = (type) => {
     switch (type) {
       case 'movie': return { icon: <Film size={16} className="inline-block" />, label: 'Película' };
@@ -208,19 +203,18 @@ function DetailPage() {
     }
   };
 
-  // --- ¡MANEJADOR DE TRÁILER SIMPLIFICADO! ---
   const handleTrailerClick = () => {
-    // Si el evento existe Y tiene una trailer_url, abrimos el modal
     if (event && event.trailer_url) {
       setIsModalOpen(true);
     }
-    // No hay 'else' - si no hay URL, el botón estará deshabilitado
   };
 
   // --- Renderizado ---
   if (loading) {
     return <div className="text-center py-20 text-subtle text-lg">Cargando...</div>;
   }
+
+  // Si hay un error (incluyendo el ID no válido)
   if (error) {
     return (
       <div className="text-center py-20">
@@ -235,25 +229,23 @@ function DetailPage() {
       </div>
     );
   }
+  
+  // Si no está cargando, no hay error, pero no hay evento o countdown (poco probable)
   if (!event || !countdown) return null;
 
   const releaseDate = new Date(event.release_date).toLocaleDateString('es-ES', {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
   });
 
-  // --- ¡NUEVA LÓGICA DE BOTÓN! ---
-  // Basada directamente en event.trailer_url
   const hasTrailer = event && event.trailer_url;
-  
   let trailerButtonText = hasTrailer ? 'Ver Tráiler' : 'Tráiler no disponible';
   let trailerButtonIcon = <PlayCircle size={20} className="mr-2" />;
   let trailerButtonClass = hasTrailer
-    ? 'bg-action-primary text-white hover:bg-action-primary-hover' // Clicable
-    : 'bg-subtle text-gray-t500 cursor-not-allowed'; // Deshabilitado
+    ? 'bg-action-primary text-white hover:bg-action-primary-hover'
+    : 'bg-subtle text-gray-t500 cursor-not-allowed';
 
   return (
     <>
-      {/* --- ¡MODAL ACTUALIZADO! --- */}
       {isModalOpen && event.trailer_url && (
         <VideoModal trailerUrl={event.trailer_url} onClose={() => setIsModalOpen(false)} />
       )}
@@ -304,7 +296,6 @@ function DetailPage() {
               </div>
               <div className="flex items-center text-subtle text-md mb-6">
                 <PlayCircle size={18} className="mr-2 flex-shrink-0" />
-                {/* --- ¡Mostramos la plataforma dinámica! --- */}
                 <span>{event.platform || 'Plataforma no anunciada'}</span>
               </div>
 
@@ -321,12 +312,10 @@ function DetailPage() {
                 </div>
               )}
 
-              {/* --- ¡BOTONES DE ACCIÓN ACTUALIZADOS! --- */}
               <div className="flex flex-col sm:flex-row gap-3 mt-auto">
-                {/* Botón de Tráiler */}
                 <button
                   onClick={handleTrailerClick} 
-                  disabled={!hasTrailer} // ¡Deshabilitado si no hay tráiler!
+                  disabled={!hasTrailer}
                   className={`flex-1 flex items-center justify-center text-lg font-medium py-3 px-5 rounded-lg transition-colors duration-200 shadow-md
                     ${trailerButtonClass}
                   `}
@@ -335,11 +324,8 @@ function DetailPage() {
                   {trailerButtonText}
                 </button>
                 
-                {/* Botones de Usuario (si está logueado) */}
                 {user && (
                   <div className="flex gap-3">
-                    
-                    {/* Botón de Guardar (Estrella) */}
                     <button
                       onClick={handleFavoriteClick}
                       disabled={loadingFavorites}
@@ -356,7 +342,6 @@ function DetailPage() {
                       />
                     </button>
                     
-                    {/* Botón de Visto (Ojo) */}
                     <button
                       onClick={handleWatchedClick}
                       disabled={loadingWatched}
@@ -380,7 +365,6 @@ function DetailPage() {
           </div>
         </div>
 
-        {/* --- Cuenta Regresiva (Sin cambios) --- */}
         <div className="bg-white shadow-md rounded-lg p-6 md:p-8 mt-8">
           {countdown.isPast ? (
             <div className="text-center">
@@ -401,7 +385,6 @@ function DetailPage() {
           )}
         </div>
 
-        {/* --- Sinopsis (Sin cambios) --- */}
         <div className="bg-white shadow-md rounded-lg p-6 md:p-8 mt-8 mb-8">
           <h3 className="text-2xl font-bold text-default mb-4">Sinopsis</h3>
           <p className="text-subtle leading-relaxed text-md">
@@ -409,7 +392,6 @@ function DetailPage() {
           </p>
         </div>
 
-        {/* --- Relacionados (Sin cambios) --- */}
         {!relatedLoading && relatedEvents.length > 0 && (
           <div className="mt-8 mb-8">
             <h3 className="text-3xl font-bold text-default mb-6">

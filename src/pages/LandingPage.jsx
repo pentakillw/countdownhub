@@ -6,7 +6,6 @@ import Footer from '../Footer.jsx'; // Importamos el footer principal
 
 // Este es un mini-header solo para la Landing Page
 function LandingHeader() {
-  // ... (El código del header no cambia) ...
   return (
     <header className="w-full bg-white shadow-sm sticky top-0 z-50">
       <nav className="container mx-auto px-6 py-4 flex justify-between items-center">
@@ -14,7 +13,14 @@ function LandingHeader() {
           <span className="text-brand-t450">Clic</span>
           <span className="text-gray-t0 ml-0.5">Times</span>
         </Link>
-        <div className="space-x-4">
+        {/* --- ¡CORRECCIÓN MÓVIL! --- 
+            Cambiamos "space-x-4" por "flex flex-wrap justify-end gap-3"
+            - flex: lo convierte en contenedor flexible
+            - flex-wrap: ¡Permite que los botones bajen si no caben!
+            - justify-end: Los alinea a la derecha
+            - gap-3: Añade espacio entre ellos (horizontal y vertical)
+        */}
+        <div className="flex flex-wrap justify-end gap-3">
           <Link 
             to="/app/login" 
             className="font-medium text-subtle transition-colors duration-200 py-2 px-3 rounded-lg hover:bg-muted"
@@ -38,7 +44,7 @@ function LandingPage() {
     <div className="min-h-screen flex flex-col bg-white">
       <LandingHeader />
 
-      {/* --- Sección de Héroe (Sin cambios) --- */}
+      {/* --- Sección de Héroe --- */}
       <main className="flex-grow">
         <section className="container mx-auto px-6 py-24 md:py-32 text-center flex flex-col items-center">
           <h1 className="text-5xl md:text-7xl font-extrabold text-default leading-tight mb-6">
@@ -64,7 +70,7 @@ function LandingPage() {
           </div>
         </section>
 
-        {/* --- Sección de Características (Sin cambios) --- */}
+        {/* --- Sección de Características --- */}
         <section className="bg-bg-muted py-20 md:py-24">
           <div className="container mx-auto px-6">
             <h2 className="text-4xl font-bold text-default text-center mb-16">
@@ -105,7 +111,7 @@ function LandingPage() {
           </div>
         </section>
         
-        {/* --- ¡NUEVA SECCIÓN: CÓMO FUNCIONA! --- */}
+        {/* --- Sección: CÓMO FUNCIONA --- */}
         <section className="py-20 md:py-24">
           <div className="container mx-auto px-6">
             <div className="grid md:grid-cols-2 gap-12 items-center">
@@ -150,7 +156,7 @@ function LandingPage() {
           </div>
         </section>
 
-        {/* --- ¡NUEVA SECCIÓN: BLOG! --- */}
+        {/* --- Sección: BLOG --- */}
         <section className="py-20 md:py-24 bg-bg-muted">
           <div className="container mx-auto px-6">
             <div className="grid md:grid-cols-2 gap-12 items-center">
@@ -189,7 +195,7 @@ function LandingPage() {
           </div>
         </section>
 
-        {/* --- ¡NUEVA SECCIÓN: LLAMADA A LA ACCIÓN FINAL! --- */}
+        {/* --- Sección: LLAMADA A LA ACCIÓN FINAL --- */}
         <section className="py-24 bg-action-primary text-white">
           <div className="container mx-auto px-6 text-center">
             <h2 className="text-4xl font-extrabold mb-4">

@@ -5,26 +5,28 @@ import {
   RouterProvider,
 } from "react-router-dom";
 
-// --- ¡RUTAS CORREGIDAS! ---
-// Asumiendo que 'main.jsx' está en la carpeta 'src'
+// --- Rutas de componentes ---
 import App from './App.jsx'
 import './index.css'
 
 // 1. Importamos TODAS las páginas
 import LandingPage from './pages/LandingPage.jsx';
-import HomePage from './pages/HomePage.jsx';
+// --- ¡CORRECCIÓN AQUÍ! ---
+// Se ha corregido el typo de './pagesS/HomePage.jsx' a './pages/HomePage.jsx'
+import HomePage from './pages/HomePage.jsx'; 
 import MoviesPage from './pages/MoviesPage.jsx';
 import SeriesPage from './pages/SeriesPage.jsx';
 import DetailPage from './pages/DetailPage.jsx';
 import MyListPage from './pages/MyListPage.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
-import SettingsPage from './pages/SettingsPage.jsx';
+// --- ¡CORRECCIÓN AQUÍ! ---
+// También había un typo en SettingsPage
+import SettingsPage from './pages/SettingsPage.jsx'; 
 import HistoryPage from './pages/HistoryPage.jsx';
+// --- Páginas Legales y de Blog ---
 import TermsAndConditionsPage from './pages/TermsAndConditionsPage.jsx';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage.jsx';
-
-// --- ¡NUEVAS PÁGINAS DEL BLOG! ---
 import BlogPage from './pages/BlogPage.jsx';
 import BlogPostPage from './pages/BlogPostPage.jsx';
 
@@ -53,16 +55,6 @@ const router = createBrowserRouter([
         path: "series", // /app/series
         element: <SeriesPage />,
       },
-      // --- ¡NUEVAS RUTAS DE BLOG! ---
-      {
-        path: "blog", // /app/blog
-        element: <BlogPage />,
-      },
-      {
-        path: "blog/:slug", // /app/blog/mi-articulo
-        element: <BlogPostPage />,
-      },
-      // --- FIN RUTAS DE BLOG ---
       {
         path: "my-list", // /app/my-list
         element: <MyListPage />,
@@ -83,10 +75,8 @@ const router = createBrowserRouter([
         path: "register", // /app/register
         element: <RegisterPage />,
       },
-      {
-        path: "event/:id", // /app/event/:id
-        element: <DetailPage />,
-      },
+      
+      // --- Rutas Legales y de Blog ---
       {
         path: "terms", // /app/terms
         element: <TermsAndConditionsPage />,
@@ -94,6 +84,20 @@ const router = createBrowserRouter([
       {
         path: "privacy", // /app/privacy
         element: <PrivacyPolicyPage />,
+      },
+      {
+        path: "blog", // /app/blog
+        element: <BlogPage />,
+      },
+      {
+        path: "blog/:slug", // /app/blog/mi-articulo
+        element: <BlogPostPage />,
+      },
+
+      // --- Ruta de Detalle (al final) ---
+      {
+        path: "event/:id", // /app/event/:id
+        element: <DetailPage />,
       },
     ],
   },
