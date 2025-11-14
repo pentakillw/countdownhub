@@ -38,21 +38,22 @@ function CountdownCard({ item }) {
     return null; 
   }
 
-  let accentColorClass = 'text-action-primary'; // Azul por defecto
+  let accentColorClass = 'text-action-primary'; 
   if (type === 'tv') {
-    accentColorClass = 'text-deco-verde-1'; // Verde para series
+    accentColorClass = 'text-deco-verde-1'; 
   }
 
   return (
     <Link 
       to={`/app/event/${id}`}
-      // --- CORRECCIÓN: Borde cambiado a gris muy claro (t900) ---
-      className={`bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 flex flex-col group border border-gray-t900 ${
+      // --- ¡MODIFICACIÓN! Fondo y borde semánticos ---
+      className={`bg-white dark:bg-bg-muted rounded-lg shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 flex flex-col group border border-border-default ${
         isPast ? 'opacity-70 hover:opacity-100' : ''
       }`}
     >
       
-      <div className="h-48 w-full overflow-hidden bg-strong">
+      {/* --- ¡MODIFICACIÓN! Fondo semántico --- */}
+      <div className="h-48 w-full overflow-hidden bg-bg-strong">
         <img 
           src={image_url} 
           alt={`Póster de ${title}`}
@@ -63,23 +64,26 @@ function CountdownCard({ item }) {
 
       <div className="p-5 flex flex-col flex-grow">
         
+        {/* --- ¡MODIFICACIÓN! Texto semántico --- */}
         <div className="flex justify-between items-center mb-2 text-sm font-medium">
           <span className={`font-bold ${accentColorClass}`}>
             {formatType(type)}
           </span>
-          <span className="text-subtle">{platform}</span>
+          <span className="text-text-subtle">{platform}</span>
         </div>
 
-        <h3 className="text-lg font-bold text-default mb-3">
+        {/* --- ¡MODIFICACIÓN! Texto semántico --- */}
+        <h3 className="text-lg font-bold text-text-default mb-3">
           {title}
         </h3>
 
         <div className="flex-grow" />
 
-        {/* --- CORRECCIÓN: Borde interno cambiado a gris muy claro (t900) --- */}
-        <div className="flex items-end justify-between mt-auto pt-4 border-t border-gray-t900">
+        {/* --- ¡MODIFICACIÓN! Borde semántico --- */}
+        <div className="flex items-end justify-between mt-auto pt-4 border-t border-border-default">
           
-          <div className="text-subtle">
+          {/* --- ¡MODIFICACIÓN! Texto semántico --- */}
+          <div className="text-text-subtle">
             <span className="text-xs block flex items-center">
               <MapPin size={12} className="mr-1 opacity-70" />
               Estreno MX:
@@ -101,7 +105,8 @@ function CountdownCard({ item }) {
               <span className={`text-4xl font-black ${accentColorClass}`}>
                 {daysLeft === 0 ? 'Hoy' : daysLeft}
               </span>
-              <span className={`text-lg text-default opacity-80 ml-1 ${daysLeft === 0 ? 'hidden' : 'inline'}`}>
+              {/* --- ¡MODIFICACIÓN! Texto semántico --- */}
+              <span className={`text-lg text-text-default opacity-80 ml-1 ${daysLeft === 0 ? 'hidden' : 'inline'}`}>
                 {daysLeft === 1 ? 'Día' : 'Días'}
               </span>
             </div>

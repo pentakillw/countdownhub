@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-// --- ¡CORRECCIÓN! Se añaden las extensiones .js y .jsx ---
 import { supabase } from '../supabaseClient.js';
 import CountdownCard from '../components/CountdownCard.jsx';
 import { Search, Filter, SlidersHorizontal } from 'lucide-react';
@@ -111,12 +110,14 @@ function SeriesPage() {
     <div>
       {/* --- Título y Botón de Filtros --- */}
       <div className="flex justify-between items-center mb-4">
-        <h1 className="text-3xl md:text-4xl font-bold text-default">
+        {/* --- ¡CORRECCIÓN! Ahora 'text-text-default' funcionará --- */}
+        <h1 className="text-3xl md:text-4xl font-bold text-text-default">
           Series
         </h1>
         <button
           onClick={() => setIsFiltersOpen(!isFiltersOpen)}
-          className="flex items-center gap-2 px-4 py-2 font-medium bg-white text-subtle rounded-lg shadow-sm border border-gray-t900 hover:bg-muted hover:text-default transition-colors"
+          // --- ¡CORRECCIÓN! 'bg-white dark:bg-bg-muted' funcionará ---
+          className="flex items-center gap-2 px-4 py-2 font-medium bg-white dark:bg-bg-muted text-text-subtle rounded-lg shadow-sm border border-border-default hover:bg-bg-muted hover:text-text-default transition-colors"
           aria-label="Mostrar/Ocultar filtros"
         >
           <SlidersHorizontal size={20} />
@@ -131,23 +132,26 @@ function SeriesPage() {
           type="text"
           id="search-series"
           placeholder="Buscar por título... (Ej: Star Trek: Starfleet)"
-          className="w-full pl-10 pr-4 py-3 border border-gray-t900 rounded-lg focus:ring-2 focus:ring-action-primary focus:outline-none"
+          // --- ¡CORRECCIÓN! 'bg-white dark:bg-bg-muted' funcionará ---
+          className="w-full pl-10 pr-4 py-3 border border-border-default rounded-lg focus:ring-2 focus:ring-action-primary focus:outline-none bg-white dark:bg-bg-muted"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
-        <Search size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-subtle" />
+        <Search size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-subtle" />
       </div>
 
       {/* --- Filtros Desplegables (Sin la búsqueda) --- */}
       {isFiltersOpen && (
-        <div className="mb-8 p-4 bg-white shadow-md rounded-lg filters-slide-down">
+        // --- ¡CORRECCIÓN! 'bg-white dark:bg-bg-muted' funcionará ---
+        <div className="mb-8 p-4 bg-white dark:bg-bg-muted shadow-md rounded-lg filters-slide-down">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             
             <div className="relative">
-              <label htmlFor="genre-series" className="block text-sm font-medium text-subtle mb-1">Género</label>
+              <label htmlFor="genre-series" className="block text-sm font-medium text-text-subtle mb-1">Género</label>
               <select
                 id="genre-series"
-                className="w-full pl-10 pr-4 py-2 border border-gray-t900 rounded-lg appearance-none focus:ring-2 focus:ring-action-primary focus:outline-none"
+                // --- ¡CORRECCIÓN! 'bg-white dark:bg-bg-default' funcionará ---
+                className="w-full pl-10 pr-4 py-2 border border-border-default rounded-lg appearance-none focus:ring-2 focus:ring-action-primary focus:outline-none bg-white dark:bg-bg-default"
                 value={selectedGenre}
                 onChange={(e) => setSelectedGenre(e.target.value)}
                 disabled={availableGenres.length === 0}
@@ -157,14 +161,15 @@ function SeriesPage() {
                   <option key={genre} value={genre}>{genre}</option>
                 ))}
               </select>
-              <Filter size={20} className="absolute left-3 top-9 text-subtle" />
+              <Filter size={20} className="absolute left-3 top-9 text-text-subtle" />
             </div>
             
             <div className="relative">
-              <label htmlFor="date-series" className="block text-sm font-medium text-subtle mb-1">Fecha de estreno</label>
+              <label htmlFor="date-series" className="block text-sm font-medium text-text-subtle mb-1">Fecha de estreno</label>
               <select
                 id="date-series"
-                className="w-full pl-10 pr-4 py-2 border border-gray-t900 rounded-lg appearance-none focus:ring-2 focus:ring-action-primary focus:outline-none"
+                // --- ¡CORRECCIÓN! 'bg-white dark:bg-bg-default' funcionará ---
+                className="w-full pl-10 pr-4 py-2 border border-border-default rounded-lg appearance-none focus:ring-2 focus:ring-action-primary focus:outline-none bg-white dark:bg-bg-default"
                 value={selectedDateFilter}
                 onChange={(e) => setSelectedDateFilter(e.target.value)}
               >
@@ -173,14 +178,15 @@ function SeriesPage() {
                 <option value="this-week">Esta Semana</option>
                 <option value="this-month">Este Mes</option>
               </select>
-              <Filter size={20} className="absolute left-3 top-9 text-subtle" />
+              <Filter size={20} className="absolute left-3 top-9 text-text-subtle" />
             </div>
 
             <div className="relative">
-              <label htmlFor="platform-series" className="block text-sm font-medium text-subtle mb-1">Plataforma</label>
+              <label htmlFor="platform-series" className="block text-sm font-medium text-text-subtle mb-1">Plataforma</label>
               <select
                 id="platform-series"
-                className="w-full pl-10 pr-4 py-2 border border-gray-t900 rounded-lg appearance-none focus:ring-2 focus:ring-action-primary focus:outline-none"
+                // --- ¡CORRECCIÓN! 'bg-white dark:bg-bg-default' funcionará ---
+                className="w-full pl-10 pr-4 py-2 border border-border-default rounded-lg appearance-none focus:ring-2 focus:ring-action-primary focus:outline-none bg-white dark:bg-bg-default"
                 value={selectedPlatform}
                 onChange={(e) => setSelectedPlatform(e.target.value)}
                 disabled={availablePlatforms.length === 0} 
@@ -190,7 +196,7 @@ function SeriesPage() {
                   <option key={platform} value={platform}>{platform}</option>
                 ))}
               </select>
-              <Filter size={20} className="absolute left-3 top-9 text-subtle" />
+              <Filter size={20} className="absolute left-3 top-9 text-text-subtle" />
             </div>
 
           </div>
@@ -200,7 +206,7 @@ function SeriesPage() {
       {/* --- Contenido (Loading, Error, Grid) --- */}
       {loading && (
         <div className="text-center py-10">
-          <p className="text-lg text-subtle">Cargando series...</p>
+          <p className="text-lg text-text-subtle">Cargando series...</p>
         </div>
       )}
 
@@ -220,9 +226,9 @@ function SeriesPage() {
       )}
 
       {!loading && !error && filteredEvents.length === 0 && (
-         <div className="text-center py-20 bg-white rounded-lg shadow-md">
-          <h3 className="text-2xl font-bold text-default mb-2">Sin resultados</h3>
-          <p className="text-lg text-subtle">
+         <div className="text-center py-20 bg-white dark:bg-bg-muted rounded-lg shadow-md">
+          <h3 className="text-2xl font-bold text-text-default mb-2">Sin resultados</h3>
+          <p className="text-lg text-text-subtle">
             {allEvents.length > 0
               ? 'No se encontraron series que coincidan con tus filtros.'
               : 'No hay próximas series programadas por el momento.'
@@ -236,7 +242,7 @@ function SeriesPage() {
                 setSelectedDateFilter('all');
                 setSelectedPlatform('all'); 
               }}
-              className="mt-6 px-5 py-2 font-medium bg-action-primary text-white rounded-lg shadow-md transition-transform duration-200 hover:scale-105"
+              className="mt-6 px-5 py-2 font-medium bg-action-primary text-text-on-accent rounded-lg shadow-md transition-transform duration-200 hover:scale-105"
             >
               Limpiar filtros
             </button>

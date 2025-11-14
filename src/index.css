@@ -14,6 +14,105 @@
     font-family: 'Inter', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    
+    /* --- ¡CORRECCIÓN! --- */
+    /* Aplicamos las variables CSS directamente en lugar de @apply */
+    background-color: var(--color-bg-default);
+    color: var(--color-text-default);
+    /* Esto reemplaza a 'transition-colors duration-300' */
+    transition-property: color, background-color;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 300ms;
+  }
+
+  /* --- ¡NUEVO! Definición de Colores Light/Dark --- */
+  
+  /* :root define los colores para el modo CLARO (light) */
+  :root {
+    --color-bg-default: #F2F3F4;        /* gray-950 */
+    --color-bg-muted: #E6E7EB;          /* gray-900 */
+    --color-bg-subtle: #DADCE1;         /* gray-850 */
+    --color-bg-strong: #0C0D0F;         /* gray-t0 */
+    --color-bg-inverse: #0C0D0F;        /* gray-t0 */
+    --color-bg-brand-subtle: #CFCFF5;   /* brand-t900 */
+    --color-bg-info-subtle: #85D1F6;
+    --color-bg-success-subtle: #81E9AA;
+    --color-bg-warning-subtle: #F9BE96;
+    --color-bg-critical-subtle: #F6B5B6;
+
+    --color-text-default: #0C0D0F;      /* gray-t0 */
+    --color-text-muted: #31343B;        /* gray-t150 */
+    --color-text-subtle: #494E59;       /* gray-t250 */
+    --color-text-strong: #0C0D0F;       /* gray-t0 */
+    --color-text-inverse: #F2F3F4;      /* gray-950 */
+    --color-text-info: #12A4E9;
+    --color-text-critical: #E84346;
+    --color-text-warning: #F2731D;
+    --color-text-success: #23C764;
+    --color-text-on-accent: #FFFFFF;
+
+    --color-border-default: #DADCE1;    /* gray-850 */
+    --color-border-strong: #494E59;     /* gray-t250 */
+    --color-border-inverse: #F2F3F4;    /* gray-950 */
+    --color-border-info-strong: #12A4E9;
+    --color-border-critical-strong: #E84346;
+    --color-border-warning-strong: #F2731D;
+    --color-border-success-strong: #23C764;
+
+    --color-action-primary: #000165;    /* brand-t200 */
+    --color-action-primary-hover: #000179; /* brand-t250 */
+    --color-action-primary-pressed: #00018D; /* brand-t300 */
+    --color-action-secondary: #3D414A;  /* gray-t200 */
+    --color-action-secondary-pressed: #494E59; /* gray-t250 */
+    --color-action-critical: #E84346;
+    --color-action-critical-hover: #EE7073;
+    --color-action-critical-pressed: #DD1B1F;
+  }
+  
+  /* .dark define los colores para el modo OSCURO (dark) */
+  .dark {
+    --color-bg-default: #0C0D0F;        /* gray-t0 */
+    --color-bg-muted: #181A1E;          /* gray-t50 */
+    --color-bg-subtle: #25272C;         /* gray-t100 */
+    --color-bg-strong: #F2F3F4;         /* gray-950 */
+    --color-bg-inverse: #F2F3F4;        /* gray-950 */
+    --color-bg-brand-subtle: #000179;   /* brand-t550 */
+    --color-bg-info-subtle: #12A4E9;    /* Más oscuro */
+    --color-bg-success-subtle: #23C764; /* Más oscuro */
+    --color-bg-warning-subtle: #F2731D; /* Más oscuro */
+    --color-bg-critical-subtle: #E84346; /* Más oscuro */
+
+    --color-text-default: #F2F3F4;      /* gray-950 */
+    --color-text-muted: #B6BAC4;        /* gray-t700 */
+    --color-text-subtle: #868D9E;       /* gray-t500 */
+    --color-text-strong: #F2F3F4;       /* gray-950 */
+    --color-text-inverse: #0C0D0F;      /* gray-t0 */
+    --color-text-info: #85D1F6;         /* Más claro */
+    --color-text-critical: #F6B5B6;     /* Más claro */
+    --color-text-warning: #F9BE96;     /* Más claro */
+    --color-text-success: #81E9AA;     /* Más claro */
+    --color-text-on-accent: #FFFFFF;
+
+    --color-border-default: #31343B;    /* gray-t150 */
+    --color-border-strong: #868D9E;     /* gray-t500 */
+    --color-border-inverse: #0C0D0F;    /* gray-t0 */
+    --color-border-info-strong: #85D1F6;
+    --color-border-critical-strong: #F6B5B6;
+    --color-border-warning-strong: #F9BE96;
+    --color-border-success-strong: #81E9AA;
+
+    /* --- ¡MODIFICACIONES AQUÍ! --- */
+    /* Cambiamos de t650/t700/t750 a t600/t650/t700 */
+    --color-action-primary: #9624C7;    /* brand-t600 (Azul más intenso) */
+    --color-action-primary-hover: #9624C7; /* brand-t650 (Ahora es el hover) */
+    --color-action-primary-pressed: #9624C7; /* brand-t700 (Ahora es el pressed) */
+    /* --- Fin de las modificacionesrgb(3, 3, 2)
+
+    --color-action-secondary: #B6BAC4;  /* gray-t700 */
+    --color-action-secondary-pressed: #CED1D7; /* gray-t800 */
+    --color-action-critical: #E84346;
+    --color-action-critical-hover: #EE7073;
+    --color-action-critical-pressed: #DD1B1F;
   }
 }
 

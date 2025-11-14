@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient.js';
-import { Calendar, Film, Tv, Globe, Star, Eye, Share2, Heart, Play } from 'lucide-react'; // Importamos Heart
+import { Calendar, Film, Tv, Globe, Star, Eye, Share2, Heart, Play, X } from 'lucide-react'; // Importamos Heart y X
 import { useAuth } from '../hooks/useAuth.js';
 import YouTube from 'react-youtube';
 
@@ -111,7 +111,8 @@ function EventDetailPage() {
 
   const handleToggleMyList = async () => {
     if (!user) {
-      alert("Debes iniciar sesión para añadir a tu lista.");
+      // Reemplazamos alert() con un modal o notificación futura
+      console.warn("Debes iniciar sesión para añadir a tu lista.");
       navigate('/app/login');
       return;
     }
@@ -131,13 +132,14 @@ function EventDetailPage() {
       }
     } catch (err) {
       console.error("Error al actualizar mi lista:", err);
-      alert("Hubo un error al actualizar tu lista. Intenta de nuevo.");
+      // Reemplazamos alert()
+      console.error("Hubo un error al actualizar tu lista. Intenta de nuevo.");
     }
   };
 
   const handleToggleHistory = async () => {
     if (!user) {
-      alert("Debes iniciar sesión para añadir a tu historial.");
+      console.warn("Debes iniciar sesión para añadir a tu historial.");
       navigate('/app/login');
       return;
     }
@@ -157,13 +159,13 @@ function EventDetailPage() {
       }
     } catch (err) {
       console.error("Error al actualizar historial:", err);
-      alert("Hubo un error al actualizar tu historial. Intenta de nuevo.");
+      console.error("Hubo un error al actualizar tu historial. Intenta de nuevo.");
     }
   };
 
   const handleToggleLike = async () => {
     if (!user) {
-      alert("Debes iniciar sesión para dar 'Me gusta'.");
+      console.warn("Debes iniciar sesión para dar 'Me gusta'.");
       navigate('/app/login');
       return;
     }
@@ -183,7 +185,7 @@ function EventDetailPage() {
       }
     } catch (err) {
       console.error("Error al actualizar 'Me gusta':", err);
-      alert("Hubo un error al actualizar tu estado de 'Me gusta'. Intenta de nuevo.");
+      console.error("Hubo un error al actualizar tu estado de 'Me gusta'. Intenta de nuevo.");
     }
   };
 
@@ -198,7 +200,8 @@ function EventDetailPage() {
       .catch((error) => console.error('Error al compartir:', error));
     } else {
       navigator.clipboard.writeText(window.location.href).then(() => {
-        alert("Enlace copiado al portapapeles.");
+        // Idealmente, mostrar un toast/snackbar en lugar de un alert
+        console.log("Enlace copiado al portapapeles.");
       });
     }
   };
@@ -206,7 +209,7 @@ function EventDetailPage() {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <p className="text-xl text-default">Cargando detalles...</p>
+        <p className="text-xl text-text-subtle">Cargando detalles...</p>
       </div>
     );
   }
@@ -256,8 +259,8 @@ function EventDetailPage() {
         Volver
       </button>
 
-      <div className="bg-white rounded-lg shadow-xl overflow-hidden md:flex mb-8">
-        <div className="md:w-1/3 h-96 md:h-auto overflow-hidden bg-strong">
+      <div className="bg-white dark:bg-bg-muted rounded-lg shadow-xl overflow-hidden md:flex mb-8">
+        <div className="md:w-1/3 h-96 md:h-auto overflow-hidden bg-bg-strong">
           <img 
             src={event.image_url} 
             alt={`Póster de ${event.title}`}
@@ -271,18 +274,18 @@ function EventDetailPage() {
             <span className="text-sm font-semibold text-brand-t500 uppercase tracking-wide">
               {event.type === 'movie' ? 'Película' : 'Serie'}
             </span>
-            <h1 className="text-4xl font-extrabold text-default mt-2 mb-4">
+            <h1 className="text-4xl font-extrabold text-text-default mt-2 mb-4">
               {event.title}
             </h1>
             
-            <p className="text-default text-lg mb-6 leading-relaxed">
+            <p className="text-text-default text-lg mb-6 leading-relaxed">
               {event.description}
             </p>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 text-subtle">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 text-text-subtle">
               <div className="flex items-center">
                 <Calendar size={20} className="mr-2 text-action-primary" />
-                <span>Estreno MX: <span className="font-medium text-default">{formattedReleaseDate}</span></span>
+                <span>Estreno MX: <span className="font-medium text-text-default">{formattedReleaseDate}</span></span>
               </div>
               <div className="flex items-center">
                 {event.type === 'movie' ? (
@@ -290,12 +293,12 @@ function EventDetailPage() {
                 ) : (
                   <Tv size={20} className="mr-2 text-deco-verde-1" />
                 )}
-                <span>Plataforma: <span className="font-medium text-default">{event.platform}</span></span>
+                <span>Plataforma: <span className="font-medium text-text-default">{event.platform}</span></span>
               </div>
               {event.genres && event.genres.length > 0 && (
                 <div className="flex items-center col-span-full">
                   <Globe size={20} className="mr-2 text-action-primary" />
-                  <span>Géneros: <span className="font-medium text-default">{event.genres.join(', ')}</span></span>
+                  <span>Géneros: <span className="font-medium text-text-default">{event.genres.join(', ')}</span></span>
                 </div>
               )}
             </div>
@@ -305,20 +308,19 @@ function EventDetailPage() {
             {trailerKey && (
               <button 
                 onClick={() => setShowTrailer(true)} 
-                className="flex items-center px-6 py-3 bg-action-primary text-white rounded-full font-semibold shadow-md hover:bg-action-primary-hover transition-colors focus:outline-none focus:ring-2 focus:ring-action-primary focus:ring-opacity-75"
+                className="flex items-center px-6 py-3 bg-action-primary text-text-on-accent rounded-full font-semibold shadow-md hover:bg-action-primary-hover transition-colors focus:outline-none focus:ring-2 focus:ring-action-primary focus:ring-opacity-75"
               >
                 <Play size={20} className="mr-2" />
                 Buscar Tráiler
               </button>
             )}
 
-            {/* --- CORRECCIÓN 5: Botones de estado con colores mejorados --- */}
             <button
               onClick={handleToggleMyList}
               className={`flex items-center px-4 py-3 rounded-full font-semibold transition-colors focus:outline-none focus:ring-2 ${
                 isAddedToMyList
-                  ? 'bg-rose-100 text-rose-700 hover:bg-rose-200 focus:ring-rose-300' // Rosa claro para "Mi Lista"
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 focus:ring-gray-300'
+                  ? 'bg-critical-subtle text-text-critical hover:bg-critical-subtle' // Actualizado a semántico
+                  : 'bg-bg-muted text-text-subtle hover:bg-bg-subtle' // Actualizado a semántico
               }`}
             >
               <Star size={20} className="mr-2" />
@@ -329,8 +331,8 @@ function EventDetailPage() {
               onClick={handleToggleHistory}
               className={`flex items-center px-4 py-3 rounded-full font-semibold transition-colors focus:outline-none focus:ring-2 ${
                 isInHistory
-                  ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200 focus:ring-yellow-300' // Amarillo claro para "Historial"
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 focus:ring-gray-300'
+                  ? 'bg-info-subtle text-text-info hover:bg-info-subtle' // Actualizado a semántico
+                  : 'bg-bg-muted text-text-subtle hover:bg-bg-subtle' // Actualizado a semántico
               }`}
             >
               <Eye size={20} className="mr-2" />
@@ -341,8 +343,8 @@ function EventDetailPage() {
               onClick={handleToggleLike}
               className={`flex items-center px-4 py-3 rounded-full font-semibold transition-colors focus:outline-none focus:ring-2 ${
                 isLiked
-                  ? 'bg-red-100 text-red-700 hover:bg-red-200 focus:ring-red-300' // Rojo claro para "Me gusta"
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 focus:ring-gray-300'
+                  ? 'bg-critical-subtle text-text-critical hover:bg-critical-subtle' // Actualizado a semántico (usamos el mismo que 'Mi Lista')
+                  : 'bg-bg-muted text-text-subtle hover:bg-bg-subtle' // Actualizado a semántico
               }`}
             >
               <Heart size={20} className="mr-2" />
@@ -351,7 +353,7 @@ function EventDetailPage() {
 
             <button 
               onClick={shareEvent} 
-              className="flex items-center px-4 py-3 bg-gray-100 text-gray-700 rounded-full font-semibold hover:bg-gray-200 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300"
+              className="flex items-center px-4 py-3 bg-bg-muted text-text-subtle rounded-full font-semibold hover:bg-bg-subtle transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300"
             >
               <Share2 size={20} className="mr-2" />
               Compartir
@@ -365,7 +367,7 @@ function EventDetailPage() {
           <div className="relative">
             <button 
               onClick={() => setShowTrailer(false)} 
-              className="absolute -top-4 -right-4 bg-white text-default rounded-full p-2 shadow-lg hover:bg-gray-200 transition-colors"
+              className="absolute -top-4 -right-4 bg-white dark:bg-bg-muted text-text-default rounded-full p-2 shadow-lg hover:bg-bg-subtle transition-colors"
               aria-label="Cerrar tráiler"
             >
               <X size={24} />

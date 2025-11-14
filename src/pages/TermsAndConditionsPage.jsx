@@ -3,10 +3,11 @@ import { Link } from 'react-router-dom';
 
 function TermsAndConditionsPage() {
   return (
-    <div className="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-md mt-8">
-      <h1 className="text-3xl font-bold text-default mb-6">Términos y Condiciones de ClicTimes</h1>
+    // --- ¡CORRECCIÓN! 'bg-white dark:bg-bg-muted' funcionará ---
+    <div className="max-w-4xl mx-auto bg-white dark:bg-bg-muted p-8 rounded-lg shadow-md mt-8">
+      <h1 className="text-3xl font-bold text-text-default mb-6">Términos y Condiciones de ClicTimes</h1>
       
-      <div className="prose max-w-none text-subtle space-y-4">
+      <div className="prose max-w-none text-text-subtle space-y-4">
         <p><strong>Última actualización: 13 de noviembre de 2025</strong></p>
 
         <p>
@@ -15,7 +16,7 @@ function TermsAndConditionsPage() {
           Si no está de acuerdo con alguna parte de los términos, no podrá acceder al Servicio.
         </p>
 
-        <h2 className="text-xl font-semibold text-default">1. Cuentas de Usuario</h2>
+        <h2 className="text-xl font-semibold text-text-default">1. Cuentas de Usuario</h2>
         <p>
           Para acceder a ciertas funciones, como "Mi Lista" y "Mi Historial", debe crear una
           cuenta. Usted es responsable de salvaguardar la contraseña que utiliza para acceder
@@ -28,7 +29,7 @@ function TermsAndConditionsPage() {
           de autenticación proporcionada por Supabase.
         </p>
 
-        <h2 className="text-xl font-semibold text-default">2. Contenido y Licencias</h2>
+        <h2 className="text-xl font-semibold text-text-default">2. Contenido y Licencias</h2>
         <p>
           ClicTimes es un servicio de seguimiento de fechas de estreno. No alojamos
           ni distribuimos ningún contenido de video o película.
@@ -42,7 +43,7 @@ function TermsAndConditionsPage() {
           respaldado ni certificado por TMDB.
         </p>
 
-        <h2 className="text-xl font-semibold text-default">3. Conducta del Usuario</h2>
+        <h2 className="text-xl font-semibold text-text-default">3. Conducta del Usuario</h2>
         <p>Usted acepta no utilizar el Servicio para:</p>
         <ul className="list-disc pl-5">
           <li>Violar cualquier ley local, estatal, nacional o internacional.</li>
@@ -54,7 +55,7 @@ function TermsAndConditionsPage() {
           <li>Suplantar a cualquier persona o entidad, o declarar falsamente su afiliación.</li>
         </ul>
 
-        <h2 className="text-xl font-semibold text-default">4. Publicidad y Enlaces de Terceros</h2>
+        <h2 className="text-xl font-semibold text-text-default">4. Publicidad y Enlaces de Terceros</h2>
         <p>
           En el futuro, ClicTimes puede mostrar publicidad de redes de terceros, como
           Google AdSense. Al utilizar nuestro Servicio, usted acepta que podemos colocar
@@ -68,21 +69,21 @@ function TermsAndConditionsPage() {
           privacidad o las prácticas de los sitios o servicios de terceros.
         </p>
 
-        <h2 className="text-xl font-semibold text-default">5. Limitación de Responsabilidad</h2>
+        <h2 className="text-xl font-semibold text-text-default">5. Limitación de Responsabilidad</h2>
         <p>
           En la máxima medida permitida por la ley aplicable, en ningún caso ClicTimes
           será responsable de ningún daño indirecto, incidental, especial, consecuente
           o punitivo... (etc.)
         </p>
         
-        <h2 className="text-xl font-semibold text-default">6. Cambios a estos Términos</h2>
+        <h2 className="text-xl font-semibold text-text-default">6. Cambios a estos Términos</h2>
         <p>
           Nos reservamos el derecho, a nuestra sola discreción, de modificar o reemplazar
           estos Términos en cualquier momento. Le notificaremos cualquier cambio publicando
           los nuevos Términos en esta página.
         </p>
         
-        <h2 className="text-xl font-semibold text-default">7. Contacto</h2>
+        <h2 className="text-xl font-semibold text-text-default">7. Contacto</h2>
         <p>
           Si tiene alguna pregunta sobre estos Términos, por favor contáctenos a través
           de los canales proporcionados en el sitio.
@@ -91,7 +92,7 @@ function TermsAndConditionsPage() {
         <div className="pt-6 text-center">
             <Link 
               to="/app" 
-              className="inline-flex items-center justify-center px-5 py-2 font-medium bg-action-primary text-white rounded-lg shadow-md transition-transform duration-200 hover:scale-105"
+              className="inline-flex items-center justify-center px-5 py-2 font-medium bg-action-primary text-text-on-accent rounded-lg shadow-md transition-transform duration-200 hover:scale-105"
             >
               Volver al inicio
             </Link>

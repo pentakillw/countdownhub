@@ -50,12 +50,14 @@ function SettingsPage() {
 
   return (
     <div>
-      <h1 className="text-3xl md:text-4xl font-bold text-default mb-8">
+      {/* --- ¡CORRECCIÓN! 'text-text-default' funcionará --- */}
+      <h1 className="text-3xl md:text-4xl font-bold text-text-default mb-8">
         Configuración
       </h1>
 
-      <div className="max-w-2xl mx-auto bg-white p-8 rounded-lg shadow-md">
-        <h2 className="text-2xl font-bold text-default mb-6">
+      {/* --- ¡CORRECCIÓN! 'bg-white dark:bg-bg-muted' funcionará --- */}
+      <div className="max-w-2xl mx-auto bg-white dark:bg-bg-muted p-8 rounded-lg shadow-md">
+        <h2 className="text-2xl font-bold text-text-default mb-6">
           Notificaciones
         </h2>
         
@@ -68,8 +70,8 @@ function SettingsPage() {
 
         <div className="flex items-center justify-between">
           <label htmlFor="notifications" className="flex flex-col pr-4">
-            <span className="font-medium text-default">Activar Notificaciones Push</span>
-            <span className="text-sm text-subtle">
+            <span className="font-medium text-text-default">Activar Notificaciones Push</span>
+            <span className="text-sm text-text-subtle">
               Recibe un aviso cuando un estreno de "Mi Lista" esté por llegar.
             </span>
           </label>
@@ -83,11 +85,13 @@ function SettingsPage() {
               checked={notificationsEnabled}
               onChange={handleToggleNotifications}
               disabled={loading}
+              // --- ¡CORRECCIÓN! 'bg-white' es correcto para el círculo ---
               className="toggle-checkbox absolute block w-7 h-7 rounded-full bg-white border-4 appearance-none cursor-pointer"
             />
             <label
               htmlFor="notifications"
-              className="toggle-label block overflow-hidden h-7 rounded-full bg-gray-t800 cursor-pointer"
+              // --- ¡CORRECCIÓN! 'bg-bg-subtle' funcionará ---
+              className="toggle-label block overflow-hidden h-7 rounded-full bg-bg-subtle cursor-pointer"
             ></label>
           </div>
         </div>
@@ -104,13 +108,14 @@ function SettingsPage() {
         `}</style>
         
         {loading && (
-          <p className="text-sm text-subtle mt-4">Actualizando...</p>
+          <p className="text-sm text-text-subtle mt-4">Actualizando...</p>
         )}
         
-        <div className="mt-6 p-4 bg-bg-muted rounded-lg">
+        {/* --- ¡CORRECCIÓN! 'bg-bg-muted dark:bg-bg-subtle' funcionará --- */}
+        <div className="mt-6 p-4 bg-bg-muted dark:bg-bg-subtle rounded-lg">
           <div className="flex">
-            <AlertTriangle size={20} className="text-subtle mr-3 flex-shrink-0" />
-            <p className="text-sm text-subtle">
+            <AlertTriangle size={20} className="text-text-subtle mr-3 flex-shrink-0" />
+            <p className="text-sm text-text-subtle">
               Esta función es experimental. Las notificaciones Push requieren un Service Worker y configuración HTTPS en producción que no están implementados en este prototipo.
             </p>
           </div>

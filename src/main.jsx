@@ -11,8 +11,6 @@ import './index.css'
 
 // 1. Importamos TODAS las páginas
 import LandingPage from './pages/LandingPage.jsx';
-// --- ¡CORRECCIÓN AQUÍ! ---
-// Se ha corregido el typo de './pagesS/HomePage.jsx' a './pages/HomePage.jsx'
 import HomePage from './pages/HomePage.jsx'; 
 import MoviesPage from './pages/MoviesPage.jsx';
 import SeriesPage from './pages/SeriesPage.jsx';
@@ -20,15 +18,15 @@ import DetailPage from './pages/DetailPage.jsx';
 import MyListPage from './pages/MyListPage.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
-// --- ¡CORRECCIÓN AQUÍ! ---
-// También había un typo en SettingsPage
 import SettingsPage from './pages/SettingsPage.jsx'; 
 import HistoryPage from './pages/HistoryPage.jsx';
-// --- Páginas Legales y de Blog ---
 import TermsAndConditionsPage from './pages/TermsAndConditionsPage.jsx';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage.jsx';
 import BlogPage from './pages/BlogPage.jsx';
 import BlogPostPage from './pages/BlogPostPage.jsx';
+
+// --- ¡NUEVO! Importamos el Proveedor de Tema ---
+import ThemeProvider from './contexts/ThemeContext.jsx';
 
 
 // 2. Creamos el "mapa" de nuestro sitio
@@ -106,6 +104,9 @@ const router = createBrowserRouter([
 // 3. Renderizamos la aplicación
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <RouterProvider router={router} />
+    {/* --- ¡NUEVO! Envolvemos la app con el Proveedor --- */}
+    <ThemeProvider>
+      <RouterProvider router={router} />
+    </ThemeProvider>
   </React.StrictMode>,
 )

@@ -1,15 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient.js';
 import CountdownCard from '../components/CountdownCard.jsx';
-// --- ¡CAMBIOS AQUÍ! ---
 import { useWatchedHistory } from '../hooks/useWatchedHistory.js'; 
 import { useAuth } from '../hooks/useAuth.js';
 import { Link } from 'react-router-dom';
-import { Eye, LogIn } from 'lucide-react'; // <-- Icono cambiado
+import { Eye, LogIn } from 'lucide-react'; 
 
 function HistoryPage() {
   const { user } = useAuth();
-  // --- ¡CAMBIOS AQUÍ! ---
   const { watchedIds, loadingWatched } = useWatchedHistory();
 
   const [watchedEvents, setWatchedEvents] = useState([]);
@@ -18,7 +16,7 @@ function HistoryPage() {
 
   useEffect(() => {
     if (loadingWatched) {
-      return; // Espera a que el hook cargue los IDs
+      return; 
     }
     if (!user || watchedIds.length === 0) {
       setWatchedEvents([]);
@@ -33,8 +31,8 @@ function HistoryPage() {
         const { data, error } = await supabase
           .from('events')
           .select('*')
-          .in('id', watchedIds) // <-- Usa los IDs del nuevo hook
-          .order('release_date', { ascending: false }); // <-- Los más recientes primero
+          .in('id', watchedIds) 
+          .order('release_date', { ascending: false }); 
         if (error) throw error;
         setWatchedEvents(data);
       } catch (err) {
@@ -45,19 +43,21 @@ function HistoryPage() {
       }
     };
     fetchWatchedEvents();
-  }, [watchedIds, user, loadingWatched]); // Depende de los IDs del hook
+  }, [watchedIds, user, loadingWatched]); 
 
   const isLoading = loadingWatched || loadingEvents;
 
   return (
     <div>
-      <h1 className="text-3xl md:text-4xl font-bold text-default mb-8">
+      {/* --- ¡MODIFICACIÓN! Texto semántico --- */}
+      <h1 className="text-3xl md:text-4xl font-bold text-text-default mb-8">
         Mi Historial (Vistos)
       </h1>
 
       {isLoading && (
         <div className="text-center py-10">
-          <p className="text-lg text-subtle">Cargando tu historial...</p>
+          {/* --- ¡MODIFICACIÓN! Texto semántico --- */}
+          <p className="text-lg text-text-subtle">Cargando tu historial...</p>
         </div>
       )}
 
@@ -69,27 +69,34 @@ function HistoryPage() {
       )}
 
       {!isLoading && !user && (
-        <div className="text-center py-20 bg-white rounded-lg shadow-md">
+        // --- ¡MODIFICACIÓN! Fondo semántico ---
+        <div className="text-center py-20 bg-white dark:bg-bg-muted rounded-lg shadow-md">
           <LogIn size={48} className="mx-auto text-action-primary mb-4" />
-          <h3 className="text-2xl font-bold text-default mb-2">Inicia sesión para ver tu historial</h3>
-          <p className="text-lg text-subtle mb-6">
+          {/* --- ¡MODIFICACIÓN! Texto semántico --- */}
+          <h3 className="text-2xl font-bold text-text-default mb-2">Inicia sesión para ver tu historial</h3>
+          {/* --- ¡MODIFICACIÓN! Texto semántico --- */}
+          <p className="text-lg text-text-subtle mb-6">
             Lleva un registro de las películas y series que ya has visto.
           </p>
           <Link 
-            to="/app/login" // Corregido (antes era "/login")
-            className="inline-flex items-center justify-center px-5 py-2 font-medium bg-action-primary text-white rounded-lg shadow-md transition-transform duration-200 hover:scale-105"
+            to="/app/login" 
+            // --- ¡MODIFICACIÓN! Colores semánticos ---
+            className="inline-flex items-center justify-center px-5 py-2 font-medium bg-action-primary text-text-on-accent rounded-lg shadow-md transition-transform duration-200 hover:scale-105"
           >
             Iniciar Sesión
           </Link>
         </div>
       )}
 
-      {/* --- ¡TEXTOS CAMBIADOS AQUÍ! --- */}
       {!isLoading && user && watchedEvents.length === 0 && (
-         <div className="text-center py-20 bg-white rounded-lg shadow-md">
-          <Eye size={48} className="mx-auto text-subtle mb-4" />
-          <h3 className="text-2xl font-bold text-default mb-2">Tu historial está vacío</h3>
-          <p className="text-lg text-subtle">
+         // --- ¡MODIFICACIÓN! Fondo semántico ---
+         <div className="text-center py-20 bg-white dark:bg-bg-muted rounded-lg shadow-md">
+          {/* --- ¡MODIFICACIÓN! Texto semántico --- */}
+          <Eye size={48} className="mx-auto text-text-subtle mb-4" />
+          {/* --- ¡MODIFICACIÓN! Texto semántico --- */}
+          <h3 className="text-2xl font-bold text-text-default mb-2">Tu historial está vacío</h3>
+          {/* --- ¡MODIFICACIÓN! Texto semántico --- */}
+          <p className="text-lg text-text-subtle">
             Marca películas y series como "vistas" (👁️) en la página de detalle.
           </p>
         </div>

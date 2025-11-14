@@ -48,21 +48,19 @@ function MyListPage() {
 
   return (
     <div>
-      {/* --- ¡MIGRADO! --- */}
-      {/* (Antes: text-brand-text) -> 'text-default' */}
-      <h1 className="text-3xl md:text-4xl font-bold text-default mb-8">
+      {/* --- ¡MODIFICACIÓN! Texto semántico --- */}
+      <h1 className="text-3xl md:text-4xl font-bold text-text-default mb-8">
         Mi Lista
       </h1>
 
       {isLoading && (
         <div className="text-center py-10">
-          {/* (Antes: text-brand-gray) -> 'text-subtle' */}
-          <p className="text-lg text-subtle">Cargando tu lista...</p>
+          {/* --- ¡MODIFICACIÓN! Texto semántico --- */}
+          <p className="text-lg text-text-subtle">Cargando tu lista...</p>
         </div>
       )}
 
       {error && (
-        // (Antes: bg-red-100 text-red-700) -> 'bg-critical-subtle' 'text-critical'
         <div className="text-center py-10 bg-critical-subtle text-text-critical p-4 rounded-lg">
           <p className="font-bold">Error</p>
           <p>{error}</p>
@@ -70,19 +68,19 @@ function MyListPage() {
       )}
 
       {!isLoading && !user && (
-        <div className="text-center py-20 bg-white rounded-lg shadow-md">
-          {/* (Antes: text-brand-blue) -> 'text-action-primary' */}
+        // --- ¡MODIFICACIÓN! Fondo semántico ---
+        <div className="text-center py-20 bg-white dark:bg-bg-muted rounded-lg shadow-md">
           <LogIn size={48} className="mx-auto text-action-primary mb-4" />
-          {/* (Antes: text-brand-text) -> 'text-default' */}
-          <h3 className="text-2xl font-bold text-default mb-2">Inicia sesión para ver tu lista</h3>
-          {/* (Antes: text-brand-gray) -> 'text-subtle' */}
-          <p className="text-lg text-subtle mb-6">
+          {/* --- ¡MODIFICACIÓN! Texto semántico --- */}
+          <h3 className="text-2xl font-bold text-text-default mb-2">Inicia sesión para ver tu lista</h3>
+          {/* --- ¡MODIFICACIÓN! Texto semántico --- */}
+          <p className="text-lg text-text-subtle mb-6">
             Guarda tus estrenos favoritos en un solo lugar.
           </p>
           <Link 
-            to="/login" 
-            // (Antes: bg-brand-blue) -> 'bg-action-primary'
-            className="inline-flex items-center justify-center px-5 py-2 font-medium bg-action-primary text-white rounded-lg shadow-md transition-transform duration-200 hover:scale-105"
+            to="/app/login" // Corregido
+            // --- ¡MODIFICACIÓN! Colores semánticos ---
+            className="inline-flex items-center justify-center px-5 py-2 font-medium bg-action-primary text-text-on-accent rounded-lg shadow-md transition-transform duration-200 hover:scale-105"
           >
             Iniciar Sesión
           </Link>
@@ -90,10 +88,13 @@ function MyListPage() {
       )}
 
       {!isLoading && user && favoriteEvents.length === 0 && (
-         <div className="text-center py-20 bg-white rounded-lg shadow-md">
-          <Star size={48} className="mx-auto text-yellow-400 mb-4" /> {/* Mantenemos amarillo */}
-          <h3 className="text-2xl font-bold text-default mb-2">Tu lista está vacía</h3>
-          <p className="text-lg text-subtle">
+         // --- ¡MODIFICACIÓN! Fondo semántico ---
+         <div className="text-center py-20 bg-white dark:bg-bg-muted rounded-lg shadow-md">
+          <Star size={48} className="mx-auto text-yellow-400 mb-4" /> 
+          {/* --- ¡MODIFICACIÓN! Texto semántico --- */}
+          <h3 className="text-2xl font-bold text-text-default mb-2">Tu lista está vacía</h3>
+          {/* --- ¡MODIFICACIÓN! Texto semántico --- */}
+          <p className="text-lg text-text-subtle">
             Guarda películas y series haciendo clic en el ícono de estrella (⭐) en la página de detalle.
           </p>
         </div>

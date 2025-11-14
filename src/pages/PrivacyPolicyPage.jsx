@@ -3,10 +3,11 @@ import { Link } from 'react-router-dom';
 
 function PrivacyPolicyPage() {
   return (
-    <div className="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-md mt-8">
-      <h1 className="text-3xl font-bold text-default mb-6">Política de Privacidad de ClicTimes</h1>
+    // --- ¡CORRECCIÓN! 'bg-white dark:bg-bg-muted' funcionará ---
+    <div className="max-w-4xl mx-auto bg-white dark:bg-bg-muted p-8 rounded-lg shadow-md mt-8">
+      <h1 className="text-3xl font-bold text-text-default mb-6">Política de Privacidad de ClicTimes</h1>
 
-      <div className="prose max-w-none text-subtle space-y-4">
+      <div className="prose max-w-none text-text-subtle space-y-4">
         <p><strong>Última actualización: 13 de noviembre de 2025</strong></p>
         
         <p>
@@ -14,7 +15,7 @@ function PrivacyPolicyPage() {
           ClicTimes recopila, utiliza, protege y divulga su información personal.
         </p>
 
-        <h2 className="text-xl font-semibold text-default">1. Información que Recopilamos</h2>
+        <h2 className="text-xl font-semibold text-text-default">1. Información que Recopilamos</h2>
         <p>Recopilamos dos tipos de información:</p>
         <ul className="list-disc pl-5">
           <li>
@@ -28,7 +29,7 @@ function PrivacyPolicyPage() {
           </li>
         </ul>
 
-        <h2 className="text-xl font-semibold text-default">2. Cómo Utilizamos su Información</h2>
+        <h2 className="text-xl font-semibold text-text-default">2. Cómo Utilizamos su Información</h2>
         <p>Utilizamos su información únicamente para:</p>
         <ul className="list-disc pl-5">
           <li>Proporcionar y mantener el Servicio (por ejemplo, para mostrarle su lista personalizada).</li>
@@ -37,7 +38,7 @@ function PrivacyPolicyPage() {
         </ul>
         <p>No vendemos, alquilamos ni compartimos su información personal con terceros para fines de marketing.</p>
 
-        <h2 className="text-xl font-semibold text-default">3. Seguridad y Almacenamiento de Datos</h2>
+        <h2 className="text-xl font-semibold text-text-default">3. Seguridad y Almacenamiento de Datos</h2>
         <p>
           Nos tomamos su seguridad muy en serio. ClicTimes está construido sobre
           <a href="https://supabase.com/" target="_blank" rel="noopener noreferrer" className="text-action-primary hover:underline">Supabase</a>,
@@ -60,7 +61,7 @@ function PrivacyPolicyPage() {
           proporcionadas por nuestra infraestructura para proteger su información.
         </p>
 
-        <h2 className="text-xl font-semibold text-default">4. Publicidad (Google AdSense)</h2>
+        <h2 className="text-xl font-semibold text-text-default">4. Publicidad (Google AdSense)</h2>
         <p>
           Actualmente, ClicTimes no muestra publicidad. Sin embargo, nos reservamos
           el derecho de implementar Google AdSense en el futuro.
@@ -73,7 +74,7 @@ function PrivacyPolicyPage() {
           <a href="https://www.google.com/settings/ads" target="_blank" rel="noopener noreferrer" className="text-action-primary hover:underline">Configuración de anuncios de Google</a>.
         </p>
         
-        <h2 className="text-xl font-semibold text-default">5. Sus Derechos</h2>
+        <h2 className="text-xl font-semibold text-text-default">5. Sus Derechos</h2>
         <p>
           Usted tiene derecho a acceder, actualizar o eliminar la información personal
           que tenemos sobre usted. Actualmente, puede administrar sus listas y su
@@ -81,7 +82,7 @@ function PrivacyPolicyPage() {
           por favor contáctenos.
         </p>
         
-        <h2 className="text-xl font-semibold text-default">6. Cambios a esta Política</h2>
+        <h2 className="text-xl font-semibold text-text-default">6. Cambios a esta Política</h2>
         <p>
           Podemos actualizar nuestra Política de Privacidad de vez en cuando. Le
           notificaremos cualquier cambio publicando la nueva Política de Privacidad
@@ -91,7 +92,7 @@ function PrivacyPolicyPage() {
         <div className="pt-6 text-center">
             <Link 
               to="/app" 
-              className="inline-flex items-center justify-center px-5 py-2 font-medium bg-action-primary text-white rounded-lg shadow-md transition-transform duration-200 hover:scale-105"
+              className="inline-flex items-center justify-center px-5 py-2 font-medium bg-action-primary text-text-on-accent rounded-lg shadow-md transition-transform duration-200 hover:scale-105"
             >
               Volver al inicio
             </Link>

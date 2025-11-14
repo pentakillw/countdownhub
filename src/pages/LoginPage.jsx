@@ -19,7 +19,7 @@ function LoginPage() {
     try {
       const { error } = await login(email, password);
       if (error) throw error;
-      navigate('/app'); // <-- Ruta actualizada (al inicio de la app)
+      navigate('/app'); 
     } catch (err) {
       console.error("Error al iniciar sesión:", err);
       setError(err.message || 'Error al iniciar sesión. Verifica tus credenciales.');
@@ -29,8 +29,10 @@ function LoginPage() {
   };
 
   return (
-    <div className="max-w-md mx-auto bg-white p-8 rounded-lg shadow-md mt-10">
-      <h1 className="text-3xl font-bold text-default mb-6 text-center">
+    // --- ¡MODIFICACIÓN! Fondo semántico ---
+    <div className="max-w-md mx-auto bg-white dark:bg-bg-muted p-8 rounded-lg shadow-md mt-10">
+      {/* --- ¡MODIFICACIÓN! Texto semántico --- */}
+      <h1 className="text-3xl font-bold text-text-default mb-6 text-center">
         Iniciar Sesión
       </h1>
       
@@ -42,13 +44,15 @@ function LoginPage() {
 
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
-          <label htmlFor="email" className="block text-sm font-medium text-subtle mb-1">
+          {/* --- ¡MODIFICACIÓN! Texto semántico --- */}
+          <label htmlFor="email" className="block text-sm font-medium text-text-subtle mb-1">
             Correo Electrónico
           </label>
           <input
             type="email"
             id="email"
-            className="w-full px-4 py-2 border border-default rounded-lg focus:ring-2 focus:ring-action-primary focus:outline-none"
+            // --- ¡MODIFICACIÓN! Borde y fondo semánticos ---
+            className="w-full px-4 py-2 border border-border-default rounded-lg focus:ring-2 focus:ring-action-primary focus:outline-none bg-white dark:bg-bg-default"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -57,13 +61,15 @@ function LoginPage() {
         </div>
         
         <div className="mb-6">
-          <label htmlFor="password" className="block text-sm font-medium text-subtle mb-1">
+          {/* --- ¡MODIFICACIÓN! Texto semántico --- */}
+          <label htmlFor="password" className="block text-sm font-medium text-text-subtle mb-1">
             Contraseña
           </label>
           <input
             type="password"
             id="password"
-            className="w-full px-4 py-2 border border-default rounded-lg focus:ring-2 focus:ring-action-primary focus:outline-none"
+            // --- ¡MODIFICACIÓN! Borde y fondo semánticos ---
+            className="w-full px-4 py-2 border border-border-default rounded-lg focus:ring-2 focus:ring-action-primary focus:outline-none bg-white dark:bg-bg-default"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
@@ -74,16 +80,18 @@ function LoginPage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-action-primary text-white py-2 px-4 rounded-lg font-medium hover:opacity-90 transition-opacity flex items-center justify-center disabled:opacity-50"
+          // --- ¡MODIFICACIÓN! Colores semánticos ---
+          className="w-full bg-action-primary text-text-on-accent py-2 px-4 rounded-lg font-medium hover:bg-action-primary-hover transition-opacity flex items-center justify-center disabled:opacity-50"
         >
           <LogIn size={18} className="mr-2" />
           {loading ? 'Ingresando...' : 'Ingresar'}
         </button>
       </form>
 
-      <p className="text-center text-subtle mt-6">
+      {/* --- ¡MODIFICACIÓN! Texto semántico --- */}
+      <p className="text-center text-text-subtle mt-6">
         ¿No tienes una cuenta?{' '}
-        <Link to="/app/register" className="text-action-primary font-medium hover:underline"> {/* <-- Ruta actualizada */}
+        <Link to="/app/register" className="text-action-primary font-medium hover:underline"> 
           Regístrate
         </Link>
       </p>

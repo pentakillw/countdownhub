@@ -1,46 +1,36 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-// Importamos los iconos que usaremos
-// --- ¡NUEVOS ICONOS AÑADIDOS! ---
 import { Check, Star, Bell, ListTodo, Newspaper, ArrowRight, LogIn, UserPlus } from 'lucide-react';
-import Footer from '../Footer.jsx'; // Importamos el footer principal
+import Footer from '../Footer.jsx'; 
 
-// Este es un mini-header solo para la Landing Page
 function LandingHeader() {
   return (
-    <header className="w-full bg-white shadow-sm sticky top-0 z-50">
+    // --- ¡MODIFICACIÓN! Fondo y borde semánticos ---
+    <header className="w-full bg-white dark:bg-bg-muted shadow-sm sticky top-0 z-50 border-b border-border-default">
       <nav className="container mx-auto px-6 py-4 flex justify-between items-center">
         <Link to="/" className="text-2xl font-bold flex items-center hover:opacity-80 transition-opacity">
           <span className="text-brand-t450">Clic</span>
-          <span className="text-gray-t0 ml-0.5">Times</span>
+          {/* --- ¡MODIFICACIÓN! Texto semántico --- */}
+          <span className="text-gray-t0 dark:text-gray-t950 ml-0.5">Times</span>
         </Link>
-        {/* El contenedor 'gap-3' ahora acomodará los iconos en móvil 
-          y el texto en desktop.
-        */}
         <div className="flex flex-wrap justify-end gap-3">
-          {/* --- ¡BOTÓN DE LOGIN MODIFICADO! --- */}
           <Link 
             to="/app/login" 
-            // Padding ajustado: px-2 en móvil (para icono), md:px-3 en desktop (para texto)
-            className="font-medium text-subtle transition-colors duration-200 py-2 rounded-lg hover:bg-muted md:px-3 px-2"
+            // --- ¡MODIFICACIÓN! Colores semánticos ---
+            className="font-medium text-text-subtle transition-colors duration-200 py-2 rounded-lg hover:bg-bg-muted md:px-3 px-2"
             aria-label="Iniciar Sesión"
           >
-            {/* Icono (solo visible en móvil) */}
             <LogIn size={20} className="block md:hidden" />
-            {/* Texto (oculto en móvil) */}
             <span className="hidden md:block">Iniciar Sesión</span>
           </Link>
           
-          {/* --- ¡BOTÓN DE REGISTRO MODIFICADO! --- */}
           <Link 
             to="/app/register" 
-            // Padding ajustado: px-2 en móvil (para icono), md:px-4 en desktop (para texto)
-            className="font-medium bg-action-primary text-white transition-colors duration-200 py-2 rounded-lg hover:bg-action-primary-hover md:px-4 px-2"
+            // --- ¡MODIFICACIÓN! Colores semánticos ---
+            className="font-medium bg-action-primary text-text-on-accent transition-colors duration-200 py-2 rounded-lg hover:bg-action-primary-hover md:px-4 px-2"
             aria-label="Crear Cuenta"
           >
-            {/* Icono (solo visible en móvil) */}
             <UserPlus size={20} className="block md:hidden" />
-            {/* Texto (oculto en móvil) */}
             <span className="hidden md:block">Crear Cuenta</span>
           </Link>
         </div>
@@ -51,69 +41,77 @@ function LandingHeader() {
 
 function LandingPage() {
   return (
-    <div className="min-h-screen flex flex-col bg-white">
+    // --- ¡MODIFICACIÓN! Fondo semántico (principal) ---
+    <div className="min-h-screen flex flex-col bg-white dark:bg-bg-default">
       <LandingHeader />
 
-      {/* --- Sección de Héroe --- */}
       <main className="flex-grow">
         <section className="container mx-auto px-6 py-24 md:py-32 text-center flex flex-col items-center">
-          <h1 className="text-5xl md:text-7xl font-extrabold text-default leading-tight mb-6">
+          {/* --- ¡MODIFICACIÓN! Texto semántico --- */}
+          <h1 className="text-5xl md:text-7xl font-extrabold text-text-default leading-tight mb-6">
             No te pierdas ni un solo
             <span className="block text-brand-t450">Estreno.</span>
           </h1>
-          <p className="max-w-2xl text-xl text-subtle mb-10">
+          {/* --- ¡MODIFICACIÓN! Texto semántico --- */}
+          <p className="max-w-2xl text-xl text-text-subtle mb-10">
             Sigue las películas y series que más esperas. ClicTimes es tu centro de control personal para todas las fechas de lanzamiento.
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
             <Link 
               to="/app" 
-              className="font-medium bg-action-primary text-white transition-colors duration-200 py-3 px-8 rounded-lg text-lg hover:bg-action-primary-hover shadow-lg"
+              // --- ¡MODIFICACIÓN! Colores semánticos ---
+              className="font-medium bg-action-primary text-text-on-accent transition-colors duration-200 py-3 px-8 rounded-lg text-lg hover:bg-action-primary-hover shadow-lg"
             >
               Ver Próximos Estrenos
             </Link>
             <Link 
               to="/app/register" 
-              className="font-medium bg-muted text-default transition-colors duration-200 py-3 px-8 rounded-lg text-lg hover:bg-subtle shadow-lg"
+              // --- ¡MODIFICACIÓN! Colores semánticos ---
+              className="font-medium bg-bg-muted text-text-default transition-colors duration-200 py-3 px-8 rounded-lg text-lg hover:bg-bg-subtle shadow-lg"
             >
               Crear Cuenta Gratis
             </Link>
           </div>
         </section>
 
-        {/* --- Sección de Características --- */}
+        {/* --- ¡MODIFICACIÓN! Fondo semántico --- */}
         <section className="bg-bg-muted py-20 md:py-24">
           <div className="container mx-auto px-6">
-            <h2 className="text-4xl font-bold text-default text-center mb-16">
+            {/* --- ¡MODIFICACIÓN! Texto semántico --- */}
+            <h2 className="text-4xl font-bold text-text-default text-center mb-16">
               Tu cuenta regresiva personal
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
               
-              <div className="bg-white p-8 rounded-lg shadow-lg text-center">
+              {/* --- ¡MODIFICACIÓN! Fondo y texto semánticos --- */}
+              <div className="bg-white dark:bg-bg-subtle p-8 rounded-lg shadow-lg text-center">
                 <div className="inline-flex items-center justify-center bg-brand-subtle text-action-primary rounded-full p-4 mb-6">
                   <Star size={32} />
                 </div>
-                <h3 className="text-2xl font-bold text-default mb-3">Crea tu Lista</h3>
-                <p className="text-subtle">
+                <h3 className="text-2xl font-bold text-text-default mb-3">Crea tu Lista</h3>
+                <p className="text-text-subtle">
                   Guarda las películas y series que te interesan en "Mi Lista" para tenerlas siempre a la mano.
                 </p>
               </div>
 
-              <div className="bg-white p-8 rounded-lg shadow-lg text-center">
+              {/* --- ¡MODIFICACIÓN! Fondo y texto semánticos --- */}
+              <div className="bg-white dark:bg-bg-subtle p-8 rounded-lg shadow-lg text-center">
                 <div className="inline-flex items-center justify-center bg-success-subtle text-success rounded-full p-4 mb-6">
                   <Check size={32} />
                 </div>
-                <h3 className="text-2xl font-bold text-default mb-3">Sigue el Conteo</h3>
-                <p className="text-subtle">
+                <h3 className="text-2xl font-bold text-text-default mb-3">Sigue el Conteo</h3>
+                <p className="text-text-subtle">
                   Visualiza exactamente cuántos días, horas y minutos faltan para el gran estreno.
                 </p>
               </div>
 
-              <div className="bg-white p-8 rounded-lg shadow-lg text-center">
+              {/* --- ¡MODIFICACIÓN! Fondo y texto semánticos --- */}
+              <div className="bg-white dark:bg-bg-subtle p-8 rounded-lg shadow-lg text-center">
                 <div className="inline-flex items-center justify-center bg-info-subtle text-info rounded-full p-4 mb-6">
                   <Bell size={32} />
                 </div>
-                <h3 className="text-2xl font-bold text-default mb-3">Recibe Notificaciones</h3>
-                <p className="text-subtle">
+                <h3 className="text-2xl font-bold text-text-default mb-3">Recibe Notificaciones</h3>
+                <p className="text-text-subtle">
                   (Próximamente) Activa las notificaciones y te avisaremos cuando tus estrenos favoritos estén por llegar.
                 </p>
               </div>
@@ -121,11 +119,9 @@ function LandingPage() {
           </div>
         </section>
         
-        {/* --- Sección: CÓMO FUNCIONA --- */}
         <section className="py-20 md:py-24">
           <div className="container mx-auto px-6">
             <div className="grid md:grid-cols-2 gap-12 items-center">
-              {/* Columna de Imagen */}
               <div>
                 <img 
                   src="https://placehold.co/600x400/3D414A/F2F3F4?text=Tu+Lista+Personal" 
@@ -133,19 +129,21 @@ function LandingPage() {
                   className="rounded-lg shadow-xl"
                 />
               </div>
-              {/* Columna de Texto */}
               <div className="text-left">
                 <div className="inline-flex items-center justify-center bg-brand-subtle text-action-primary rounded-full p-3 mb-4">
                   <ListTodo size={28} />
                 </div>
-                <h2 className="text-4xl font-bold text-default mb-6">
+                {/* --- ¡MODIFICACIÓN! Texto semántico --- */}
+                <h2 className="text-4xl font-bold text-text-default mb-6">
                   Organiza todo tu contenido
                 </h2>
-                <p className="text-lg text-subtle mb-6">
+                {/* --- ¡MODIFICACIÓN! Texto semántico --- */}
+                <p className="text-lg text-text-subtle mb-6">
                   ClicTimes te permite llevar un control total. Cubrimos miles de películas
                   y series en un solo lugar.
                 </p>
-                <ul className="space-y-4 text-subtle">
+                {/* --- ¡MODIFICACIÓN! Texto semántico --- */}
+                <ul className="space-y-4 text-text-subtle">
                   <li className="flex items-start">
                     <Star size={20} className="mr-3 text-brand-t450 flex-shrink-0 mt-1" />
                     <span>
@@ -166,19 +164,20 @@ function LandingPage() {
           </div>
         </section>
 
-        {/* --- Sección: BLOG --- */}
+        {/* --- ¡MODIFICACIÓN! Fondo semántico --- */}
         <section className="py-20 md:py-24 bg-bg-muted">
           <div className="container mx-auto px-6">
             <div className="grid md:grid-cols-2 gap-12 items-center">
-              {/* Columna de Texto (orden 2 en móvil) */}
               <div className="text-left md:order-2">
                 <div className="inline-flex items-center justify-center bg-info-subtle text-info rounded-full p-3 mb-4">
                   <Newspaper size={28} />
                 </div>
-                <h2 className="text-4xl font-bold text-default mb-6">
+                {/* --- ¡MODIFICACIÓN! Texto semántico --- */}
+                <h2 className="text-4xl font-bold text-text-default mb-6">
                   Lee análisis y noticias en el Blog
                 </h2>
-                <p className="text-lg text-subtle mb-6">
+                {/* --- ¡MODIFICACIÓN! Texto semántico --- */}
+                <p className="text-lg text-text-subtle mb-6">
                   Para cumplir con AdSense y ofrecerte valor, nuestro blog está
                   lleno de artículos originales, análisis y noticias sobre
                   el mundo del cine y las series. ¡Descubre contenido nuevo
@@ -193,7 +192,6 @@ function LandingPage() {
                 </Link>
               </div>
               
-              {/* Columna de Imagen (orden 1 en móvil) */}
               <div className="md:order-1">
                 <img 
                   src="https://placehold.co/600x400/000165/F2F3F4?text=Blog+ClicTimes" 
@@ -205,19 +203,21 @@ function LandingPage() {
           </div>
         </section>
 
-        {/* --- Sección: LLAMADA A LA ACCIÓN FINAL --- */}
-        <section className="py-24 bg-action-primary text-white">
+        {/* --- ¡MODIFICACIÓN! Colores semánticos --- */}
+        <section className="py-24 bg-action-primary text-text-on-accent">
           <div className="container mx-auto px-6 text-center">
             <h2 className="text-4xl font-extrabold mb-4">
               ¿Qué estás esperando?
             </h2>
-            <p className="text-xl text-gray-t800 mb-8 max-w-xl mx-auto">
+            {/* --- ¡MODIFICACIÓN! Texto semántico (usando gris claro) --- */}
+            <p className="text-xl text-gray-t800 dark:text-gray-t800 mb-8 max-w-xl mx-auto">
               Crea tu cuenta gratuita hoy mismo y ten el control total
               de los estrenos que te importan.
             </p>
             <Link 
               to="/app/register" 
-              className="font-medium bg-white text-action-primary transition-colors duration-200 py-3 px-8 rounded-lg text-lg hover:bg-gray-t900 shadow-lg"
+              // --- ¡MODIFICACIÓN! Colores semánticos ---
+              className="font-medium bg-white dark:bg-gray-t950 text-action-primary dark:text-brand-t650 transition-colors duration-200 py-3 px-8 rounded-lg text-lg hover:bg-gray-t900 shadow-lg"
             >
               Crear Cuenta Gratis
             </Link>

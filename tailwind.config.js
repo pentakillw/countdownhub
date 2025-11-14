@@ -1,15 +1,16 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: "class", // <-- MODO OSCURO ACTIVADO
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
     // --- ¡CORRECCIÓN! ---
-    // 'colors' va aquí, al mismo nivel que 'extend'.
-    // Esto REEMPLAZA la paleta de colores de Tailwind por la nuestra.
+    // La paleta de colores AHORA usa variables CSS.
+    // Esto reemplaza la paleta estática anterior.
     colors: {
-      // --- Escala de Grises ---
+      // --- Escala de Grises (Sin cambios) ---
       gray: {
         't0': '#0C0D0F',   't50': '#181A1E',   't100': '#25272C',  't150': '#31343B',
         't200': '#3D414A',  't250': '#494E59',  't300': '#555B68',  't350': '#626876',
@@ -18,7 +19,7 @@ export default {
         't800': '#CED1D7',  't850': '#DADCE1',  't900': '#E6E7EB',  't950': '#F2F3F4',
       },
       
-      // --- Colores de Marca ---
+      // --- Colores de Marca (Sin cambios) ---
       brand: {
         't0': '#000014',   't50': '#000028',   't100': '#00013D',  't150': '#000151',
         't200': '#000165',  't250': '#000179',  't300': '#00018D',  't350': '#0002A2',
@@ -27,47 +28,47 @@ export default {
         't800': '#A1A1EB',  't850': '#B8B8F0',  't900': '#CFCFF5',  't950': '#E6E6FA',
       },
 
-      // --- Paletas Semánticas ---
-      'bg-default': '#F2F3F4',
-      'bg-muted': '#E6E7EB',
-      'bg-subtle': '#DADCE1',
-      'bg-strong': '#0C0D0F',
-      'bg-inverse': '#0C0D0F',
-      'bg-brand-subtle': '#CFCFF5',
-      'bg-info-subtle': '#85D1F6',
-      'bg-success-subtle': '#81E9AA',
-      'bg-warning-subtle': '#F9BE96',
-      'bg-critical-subtle': '#F6B5B6',
+      // --- ¡PALETA SEMÁNTICA CON VARIABLES! ---
+      'bg-default': 'var(--color-bg-default)',
+      'bg-muted': 'var(--color-bg-muted)',
+      'bg-subtle': 'var(--color-bg-subtle)',
+      'bg-strong': 'var(--color-bg-strong)',
+      'bg-inverse': 'var(--color-bg-inverse)',
+      'bg-brand-subtle': 'var(--color-bg-brand-subtle)',
+      'bg-info-subtle': 'var(--color-bg-info-subtle)',
+      'bg-success-subtle': 'var(--color-bg-success-subtle)',
+      'bg-warning-subtle': 'var(--color-bg-warning-subtle)',
+      'bg-critical-subtle': 'var(--color-bg-critical-subtle)',
 
-      'text-default': '#0C0D0F',
-      'text-muted': '#31343B',
-      'text-subtle': '#494E59',
-      'text-strong': '#0C0D0F',
-      'text-inverse': '#F2F3F4',
-      'text-info': '#12A4E9',
-      'text-critical': '#E84346',
-      'text-warning': '#F2731D',
-      'text-success': '#23C764',
-      'text-on-accent': '#FFFFFF',
+      'text-default': 'var(--color-text-default)',
+      'text-muted': 'var(--color-text-muted)',
+      'text-subtle': 'var(--color-text-subtle)',
+      'text-strong': 'var(--color-text-strong)',
+      'text-inverse': 'var(--color-text-inverse)',
+      'text-info': 'var(--color-text-info)',
+      'text-critical': 'var(--color-text-critical)',
+      'text-warning': 'var(--color-text-warning)',
+      'text-success': 'var(--color-text-success)',
+      'text-on-accent': 'var(--color-text-on-accent)',
 
-      'border-default': '#DADCE1',
-      'border-strong': '#494E59',
-      'border-inverse': '#F2F3F4',
-      'border-info-strong': '#12A4E9',
-      'border-critical-strong': '#E84346',
-      'border-warning-strong': '#F2731D',
-      'border-success-strong': '#23C764',
+      'border-default': 'var(--color-border-default)',
+      'border-strong': 'var(--color-border-strong)',
+      'border-inverse': 'var(--color-border-inverse)',
+      'border-info-strong': 'var(--color-border-info-strong)',
+      'border-critical-strong': 'var(--color-border-critical-strong)',
+      'border-warning-strong': 'var(--color-border-warning-strong)',
+      'border-success-strong': 'var(--color-border-success-strong)',
 
-      'action-primary': '#000165',
-      'action-primary-hover': '#000179',
-      'action-primary-pressed': '#00018D',
-      'action-secondary': '#3D414A',
-      'action-secondary-pressed': '#494E59',
-      'action-critical': '#E84346',
-      'action-critical-hover': '#EE7073',
-      'action-critical-pressed': '#DD1B1F',
+      'action-primary': 'var(--color-action-primary)',
+      'action-primary-hover': 'var(--color-action-primary-hover)',
+      'action-primary-pressed': 'var(--color-action-primary-pressed)',
+      'action-secondary': 'var(--color-action-secondary)',
+      'action-secondary-pressed': 'var(--color-action-secondary-pressed)',
+      'action-critical': 'var(--color-action-critical)',
+      'action-critical-hover': 'var(--color-action-critical-hover)',
+      'action-critical-pressed': 'var(--color-action-critical-pressed)',
 
-      // --- Decorativos ---
+      // --- Decorativos (Sin cambios) ---
       'deco-azul-1': '#12A4E9',
       'deco-azul-2': '#56C0F2',
       'deco-verde-1': '#23C764',
@@ -83,18 +84,17 @@ export default {
       'deco-rosa-1': '#E54699',
       'deco-rosa-2': '#EE89BE',
 
-      // --- ¡CORRECCIÓN! ---
-      // Añadimos 'white' y 'transparent'
       'white': '#FFFFFF',
       'transparent': 'transparent',
     },
 
     extend: {
-      // 'fontFamily' SÍ se queda aquí, porque estamos
-      // extendiendo las fuentes, no reemplazándolas.
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
       },
+      // --- ¡ERROR CORREGIDO! ---
+      // El bloque 'colors' conflictivo que estaba aquí
+      // ha sido eliminado.
     },
   },
   plugins: [],
