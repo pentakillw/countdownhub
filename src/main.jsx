@@ -1,112 +1,95 @@
-import React from 'react'
+import React, { Suspense, lazy } from 'react'
 import ReactDOM from 'react-dom/client'
 import {
   createBrowserRouter,
   RouterProvider,
 } from "react-router-dom";
 
-// --- Rutas de componentes ---
 import App from './App.jsx'
 import './index.css'
-
-// 1. Importamos TODAS las páginas
-import LandingPage from './pages/LandingPage.jsx';
-import HomePage from './pages/HomePage.jsx'; 
-import MoviesPage from './pages/MoviesPage.jsx';
-import SeriesPage from './pages/SeriesPage.jsx';
-import DetailPage from './pages/DetailPage.jsx';
-import MyListPage from './pages/MyListPage.jsx';
-import LoginPage from './pages/LoginPage.jsx';
-import RegisterPage from './pages/RegisterPage.jsx';
-import SettingsPage from './pages/SettingsPage.jsx'; 
-import HistoryPage from './pages/HistoryPage.jsx';
-import TermsAndConditionsPage from './pages/TermsAndConditionsPage.jsx';
-import PrivacyPolicyPage from './pages/PrivacyPolicyPage.jsx';
-import BlogPage from './pages/BlogPage.jsx';
-import BlogPostPage from './pages/BlogPostPage.jsx';
-
-// --- ¡NUEVO! Importamos el Proveedor de Tema ---
 import ThemeProvider from './contexts/ThemeContext.jsx';
+import ToastProvider from './contexts/ToastContext.jsx';
+// --- NUEVO: Importamos ScrollToTop ---
+import ScrollToTop from './components/ScrollToTop.jsx';
 
+// --- LAZY LOADING ---
+const LandingPage = lazy(() => import('./pages/LandingPage.jsx'));
+const HomePage = lazy(() => import('./pages/HomePage.jsx')); 
+const MoviesPage = lazy(() => import('./pages/MoviesPage.jsx'));
+const SeriesPage = lazy(() => import('./pages/SeriesPage.jsx'));
+const DetailPage = lazy(() => import('./pages/DetailPage.jsx'));
+const MyListPage = lazy(() => import('./pages/MyListPage.jsx'));
+const LoginPage = lazy(() => import('./pages/LoginPage.jsx'));
+const RegisterPage = lazy(() => import('./pages/RegisterPage.jsx'));
+const SettingsPage = lazy(() => import('./pages/SettingsPage.jsx')); 
+const HistoryPage = lazy(() => import('./pages/HistoryPage.jsx'));
+const TermsAndConditionsPage = lazy(() => import('./pages/TermsAndConditionsPage.jsx'));
+const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage.jsx'));
+const BlogPage = lazy(() => import('./pages/BlogPage.jsx'));
+const BlogPostPage = lazy(() => import('./pages/BlogPostPage.jsx'));
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage.jsx'));
 
-// 2. Creamos el "mapa" de nuestro sitio
+const PageLoader = () => (
+  <div className="flex items-center justify-center min-h-[50vh]">
+    <div className="w-10 h-10 border-4 border-brand-t500/30 border-t-brand-t500 rounded-full animate-spin"></div>
+  </div>
+);
+
+// Wrapper para inyectar ScrollToTop dentro del RouterProvider
+const AppLayout = ({ children }) => (
+  <>
+    <ScrollToTop />
+    {children}
+  </>
+);
+
 const router = createBrowserRouter([
   {
-    // --- RUTA 1: La Landing Page ---
     path: "/",
-    element: <LandingPage />,
+    element: (
+      <AppLayout>
+        <Suspense fallback={<PageLoader />}>
+          <LandingPage />
+        </Suspense>
+      </AppLayout>
+    ),
   },
   {
-    // --- RUTA 2: La Aplicación Principal ---
     path: "/app",
-    element: <App />, 
+    element: (
+      <AppLayout>
+        <App />
+      </AppLayout>
+    ), 
     children: [
-      {
-        index: true, // /app
-        element: <HomePage />,
-      },
-      {
-        path: "movies", // /app/movies
-        element: <MoviesPage />,
-      },
-      {
-        path: "series", // /app/series
-        element: <SeriesPage />,
-      },
-      {
-        path: "my-list", // /app/my-list
-        element: <MyListPage />,
-      },
-      {
-        path: "history", // /app/history
-        element: <HistoryPage />,
-      },
-      {
-        path: "settings", // /app/settings
-        element: <SettingsPage />,
-      },
-      {
-        path: "login", // /app/login
-        element: <LoginPage />,
-      },
-      {
-        path: "register", // /app/register
-        element: <RegisterPage />,
-      },
-      
-      // --- Rutas Legales y de Blog ---
-      {
-        path: "terms", // /app/terms
-        element: <TermsAndConditionsPage />,
-      },
-      {
-        path: "privacy", // /app/privacy
-        element: <PrivacyPolicyPage />,
-      },
-      {
-        path: "blog", // /app/blog
-        element: <BlogPage />,
-      },
-      {
-        path: "blog/:slug", // /app/blog/mi-articulo
-        element: <BlogPostPage />,
-      },
-
-      // --- Ruta de Detalle (al final) ---
-      {
-        path: "event/:id", // /app/event/:id
-        element: <DetailPage />,
-      },
+      { index: true, element: <Suspense fallback={<PageLoader />}><HomePage /></Suspense> },
+      { path: "movies", element: <Suspense fallback={<PageLoader />}><MoviesPage /></Suspense> },
+      { path: "series", element: <Suspense fallback={<PageLoader />}><SeriesPage /></Suspense> },
+      { path: "my-list", element: <Suspense fallback={<PageLoader />}><MyListPage /></Suspense> },
+      { path: "history", element: <Suspense fallback={<PageLoader />}><HistoryPage /></Suspense> },
+      { path: "settings", element: <Suspense fallback={<PageLoader />}><SettingsPage /></Suspense> },
+      { path: "login", element: <Suspense fallback={<PageLoader />}><LoginPage /></Suspense> },
+      { path: "register", element: <Suspense fallback={<PageLoader />}><RegisterPage /></Suspense> },
+      { path: "terms", element: <Suspense fallback={<PageLoader />}><TermsAndConditionsPage /></Suspense> },
+      { path: "privacy", element: <Suspense fallback={<PageLoader />}><PrivacyPolicyPage /></Suspense> },
+      { path: "blog", element: <Suspense fallback={<PageLoader />}><BlogPage /></Suspense> },
+      { path: "blog/:slug", element: <Suspense fallback={<PageLoader />}><BlogPostPage /></Suspense> },
+      { path: "event/:id", element: <Suspense fallback={<PageLoader />}><DetailPage /></Suspense> },
+      { path: "*", element: <Suspense fallback={<PageLoader />}><NotFoundPage /></Suspense> },
     ],
   },
+  {
+    path: "*",
+    element: <Suspense fallback={<PageLoader />}><NotFoundPage /></Suspense>
+  }
 ]);
 
-// 3. Renderizamos la aplicación
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    {/* --- ¡NUEVO! Envolvemos la app con el Proveedor --- */}
     <ThemeProvider>
-      <RouterProvider router={router} />
+      <ToastProvider>
+        <RouterProvider router={router} />
+      </ToastProvider>
     </ThemeProvider>
   </React.StrictMode>,
 )

@@ -1,41 +1,83 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient.js';
 import CountdownCard from '../components/CountdownCard.jsx';
-import { Search, Filter, SlidersHorizontal } from 'lucide-react';
+import HeroFeature from '../components/HeroFeature.jsx'; 
+// --- Importamos la Paginación ---
+import Pagination from '../components/Pagination.jsx';
+import { Search, SlidersHorizontal, TrendingUp, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 
 function HomePage() {
   const [allEvents, setAllEvents] = useState([]);
   const [filteredEvents, setFilteredEvents] = useState([]);
+  
+  // Estados para el Carrusel
+  const [featuredEvents, setFeaturedEvents] = useState([]); 
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  // Estados de Filtros
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedGenre, setSelectedGenre] = useState('all');
   const [selectedDateFilter, setSelectedDateFilter] = useState('all');
   const [selectedPlatform, setSelectedPlatform] = useState('all');
   const [availableGenres, setAvailableGenres] = useState([]);
   const [availablePlatforms, setAvailablePlatforms] = useState([]);
+  
+  // --- Estados de Paginación ---
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 12; // Mostramos 12 tarjetas por página
+  
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
 
-  // --- Efecto 1: Cargar Datos Iniciales ---
+  // --- Carga de Datos ---
   useEffect(() => {
     const fetchEvents = async () => {
       setLoading(true);
       setError(null);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const todayISO = today.toISOString();
+
+      const recentPast = new Date();
+      recentPast.setDate(recentPast.getDate() - 60); 
+      const recentPastISO = recentPast.toISOString();
+
       try {
         const { data, error } = await supabase
           .from('events')
           .select('*') 
-          .gte('release_date', todayISO)
-          .order('release_date', { ascending: true });
+          .gte('release_date', recentPastISO);
+        
         if (error) throw error;
-        setAllEvents(data);
-        setFilteredEvents(data);
+
+        if (data && data.length > 0) {
+            const now = new Date();
+            now.setHours(0,0,0,0);
+
+            const upcomingEvents = data.filter(e => new Date(e.release_date) >= now);
+            const releasedEvents = data.filter(e => new Date(e.release_date) < now);
+
+            upcomingEvents.sort((a, b) => b.popularity - a.popularity);
+            releasedEvents.sort((a, b) => b.popularity - a.popularity);
+
+            let heroSelection = [...upcomingEvents].slice(0, 5);
+            if (heroSelection.length < 5) {
+                const needed = 5 - heroSelection.length;
+                heroSelection = [...heroSelection, ...releasedEvents.slice(0, needed)];
+            }
+
+            setFeaturedEvents(heroSelection);
+
+            const sortedCatalog = sortSmartCatalog(data);
+            setAllEvents(sortedCatalog);
+            setFilteredEvents(sortedCatalog);
+        } else {
+            setFeaturedEvents([]);
+            setAllEvents([]);
+            setFilteredEvents([]);
+        }
+
       } catch (err) {
         console.error("Error al cargar eventos:", err);
-        setError("No se pudieron cargar los próximos estrenos. Intenta de nuevo más tarde.");
+        setError("Error de conexión. Verifica tu internet.");
       } finally {
         setLoading(false);
       }
@@ -43,23 +85,44 @@ function HomePage() {
     fetchEvents();
   }, []);
 
-  // --- Efecto 2: Generar Listas de Filtros ---
+  const sortSmartCatalog = (events) => {
+      const now = new Date();
+      now.setHours(0,0,0,0);
+      const upcoming = [];
+      const past = [];
+      events.forEach(event => {
+          const rDate = new Date(event.release_date);
+          rDate.setHours(0,0,0,0);
+          if (rDate >= now) upcoming.push(event);
+          else past.push(event);
+      });
+      upcoming.sort((a, b) => new Date(a.release_date) - new Date(b.release_date));
+      past.sort((a, b) => new Date(b.release_date) - new Date(a.release_date));
+      return [...upcoming, ...past];
+  };
+
+  useEffect(() => {
+    if (featuredEvents.length <= 1) return;
+    const interval = setInterval(() => {
+        setCurrentSlide((prev) => (prev + 1) % featuredEvents.length);
+    }, 6000); 
+    return () => clearInterval(interval);
+  }, [featuredEvents]);
+
   useEffect(() => {
     if (allEvents.length === 0) return;
     const allGenresLists = allEvents.map(event => event.genres).filter(Boolean); 
-    const flatGenres = allGenresLists.flat();
-    const uniqueGenres = [...new Set(flatGenres)];
-    uniqueGenres.sort();
+    const uniqueGenres = [...new Set(allGenresLists.flat())].sort();
     setAvailableGenres(uniqueGenres);
     const allPlatforms = allEvents.map(event => event.platform).filter(Boolean); 
-    const uniquePlatforms = [...new Set(allPlatforms)];
-    uniquePlatforms.sort();
+    const uniquePlatforms = [...new Set(allPlatforms)].sort();
     setAvailablePlatforms(uniquePlatforms);
   }, [allEvents]);
 
-  // --- Efecto 3: Aplicar Filtros ---
+  // --- Lógica de Filtrado y Reinicio de Paginación ---
   useEffect(() => {
     let processedEvents = [...allEvents];
+
     if (searchTerm.trim() !== '') {
       const lowerCaseSearch = searchTerm.toLowerCase();
       processedEvents = processedEvents.filter(event => 
@@ -71,183 +134,194 @@ function HomePage() {
         event.genres && event.genres.includes(selectedGenre)
       );
     }
-    if (selectedDateFilter !== 'all') {
-      const now = new Date();
-      now.setHours(0, 0, 0, 0);
-      if (selectedDateFilter === 'today') {
-        processedEvents = processedEvents.filter(event => {
-          const eventDate = new Date(event.release_date);
-          eventDate.setHours(0, 0, 0, 0);
-          return eventDate.getTime() === now.getTime();
-        });
-      } 
-      else if (selectedDateFilter === 'this-week') {
-        const endOfWeek = new Date(now);
-        endOfWeek.setDate(now.getDate() + (7 - now.getDay()));
-        endOfWeek.setHours(23, 59, 59, 999);
-        processedEvents = processedEvents.filter(event => {
-          const eventDate = new Date(event.release_date);
-          return eventDate >= now && eventDate <= endOfWeek;
-        });
-      } 
-      else if (selectedDateFilter === 'this-month') {
-        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-        endOfMonth.setHours(23, 59, 59, 999);
-        processedEvents = processedEvents.filter(event => {
-          const eventDate = new Date(event.release_date);
-          return eventDate >= now && eventDate <= endOfMonth;
-        });
-      }
-    }
     if (selectedPlatform !== 'all') {
       processedEvents = processedEvents.filter(event => 
-        event.platform === selectedPlatform
+        event.platform && event.platform.includes(selectedPlatform)
       );
     }
+    if (selectedDateFilter !== 'all') {
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+        if (selectedDateFilter === 'today') {
+            processedEvents = processedEvents.filter(event => {
+                const d = new Date(event.release_date); d.setHours(0,0,0,0);
+                return d.getTime() === now.getTime();
+            });
+        } else if (selectedDateFilter === 'this-week') {
+            const end = new Date(now); end.setDate(now.getDate() + 7);
+            processedEvents = processedEvents.filter(event => {
+                const d = new Date(event.release_date);
+                return d >= now && d <= end;
+            });
+        } else if (selectedDateFilter === 'upcoming') {
+            processedEvents = processedEvents.filter(event => new Date(event.release_date) >= now);
+            processedEvents.sort((a,b) => new Date(a.release_date) - new Date(b.release_date));
+        }
+    } else {
+        processedEvents = sortSmartCatalog(processedEvents);
+    }
+
     setFilteredEvents(processedEvents);
+    setCurrentPage(1); // Reset a página 1 cuando cambian los filtros
   }, [searchTerm, selectedGenre, selectedDateFilter, selectedPlatform, allEvents]);
+
+  const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % featuredEvents.length);
+  const prevSlide = () => setCurrentSlide((prev) => (prev - 1 + featuredEvents.length) % featuredEvents.length);
+
+  // --- Lógica de Corte para Paginación ---
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentEvents = filteredEvents.slice(indexOfFirstItem, indexOfLastItem);
+
+  // --- Función para Scroll al Top al cambiar de página ---
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+    // Hacemos scroll suave al inicio de la lista, no del todo arriba para mantener el Hero visible si se quiere
+    window.scrollTo({ top: 500, behavior: 'smooth' }); 
+  };
 
   return (
     <div>
-      {/* --- Título y Botón de Filtros --- */}
-      <div className="flex justify-between items-center mb-4">
-        {/* --- ¡CORRECCIÓN! Ahora 'text-text-default' funcionará --- */}
-        <h1 className="text-3xl md:text-4xl font-bold text-text-default">
-          Próximos Estrenos
-        </h1>
-        <button
-          onClick={() => setIsFiltersOpen(!isFiltersOpen)}
-          // --- ¡CORRECCIÓN! 'bg-white dark:bg-bg-muted' funcionará ---
-          className="flex items-center gap-2 px-4 py-2 font-medium bg-white dark:bg-bg-muted text-text-subtle rounded-lg shadow-sm border border-border-default hover:bg-bg-muted hover:text-text-default transition-colors"
-          aria-label="Mostrar/Ocultar filtros"
-        >
-          <SlidersHorizontal size={20} />
-          <span className="hidden sm:inline">Filtros</span>
-        </button>
-      </div>
-
-      {/* --- ¡NUEVO! Barra de Búsqueda Visible --- */}
-      <div className="relative mb-6">
-        <label htmlFor="search-home" className="sr-only">Buscar por título</label>
-        <input
-          type="text"
-          id="search-home"
-          placeholder="Buscar por título... (Ej: La Casa del Dragón)"
-          // --- ¡CORRECCIÓN! 'bg-white dark:bg-bg-muted' funcionará ---
-          className="w-full pl-10 pr-4 py-3 border border-border-default rounded-lg focus:ring-2 focus:ring-action-primary focus:outline-none bg-white dark:bg-bg-muted"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-        <Search size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-subtle" />
-      </div>
-
-      {/* --- Filtros Desplegables (Sin la búsqueda) --- */}
-      {isFiltersOpen && (
-        // --- ¡CORRECCIÓN! 'bg-white dark:bg-bg-muted' funcionará ---
-        <div className="mb-8 p-4 bg-white dark:bg-bg-muted shadow-md rounded-lg filters-slide-down">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            
-            <div className="relative">
-              <label htmlFor="genre" className="block text-sm font-medium text-text-subtle mb-1">Género</label>
-              <select
-                id="genre"
-                // --- ¡CORRECCIÓN! 'bg-white dark:bg-bg-default' funcionará ---
-                className="w-full pl-10 pr-4 py-2 border border-border-default rounded-lg appearance-none focus:ring-2 focus:ring-action-primary focus:outline-none bg-white dark:bg-bg-default"
-                value={selectedGenre}
-                onChange={(e) => setSelectedGenre(e.target.value)}
-                disabled={availableGenres.length === 0}
-              >
-                <option value="all">Todos los géneros</option>
-                {availableGenres.map(genre => (
-                  <option key={genre} value={genre}>{genre}</option>
-                ))}
-              </select>
-              <Filter size={20} className="absolute left-3 top-9 text-text-subtle" />
-            </div>
-            
-            <div className="relative">
-              <label htmlFor="date" className="block text-sm font-medium text-text-subtle mb-1">Fecha de estreno</label>
-              <select
-                id="date"
-                // --- ¡CORRECCIÓN! 'bg-white dark:bg-bg-default' funcionará ---
-                className="w-full pl-10 pr-4 py-2 border border-border-default rounded-lg appearance-none focus:ring-2 focus:ring-action-primary focus:outline-none bg-white dark:bg-bg-default"
-                value={selectedDateFilter}
-                onChange={(e) => setSelectedDateFilter(e.target.value)}
-              >
-                <option value="all">Cualquier fecha</option>
-                <option value="today">Hoy</option>
-                <option value="this-week">Esta Semana</option>
-                <option value="this-month">Este Mes</option>
-              </select>
-              <Filter size={20} className="absolute left-3 top-9 text-text-subtle" />
-            </div>
-
-            <div className="relative">
-              <label htmlFor="platform" className="block text-sm font-medium text-text-subtle mb-1">Plataforma</label>
-              <select
-                id="platform"
-                // --- ¡CORRECCIÓN! 'bg-white dark:bg-bg-default' funcionará ---
-                className="w-full pl-10 pr-4 py-2 border border-border-default rounded-lg appearance-none focus:ring-2 focus:ring-action-primary focus:outline-none bg-white dark:bg-bg-default"
-                value={selectedPlatform}
-                onChange={(e) => setSelectedPlatform(e.target.value)}
-                disabled={availablePlatforms.length === 0} 
-              >
-                <option value="all">Todas las plataformas</option>
-                {availablePlatforms.map(platform => (
-                  <option key={platform} value={platform}>{platform}</option>
-                ))}
-              </select>
-              <Filter size={20} className="absolute left-3 top-9 text-text-subtle" />
-            </div>
-
-          </div>
+      {/* 1. SECCIÓN: HERO CARRUSEL */}
+      {!loading && !error && !searchTerm && featuredEvents.length > 0 && (
+        <div className="mb-12 relative group">
+             <div className="flex items-center gap-2 mb-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                <Sparkles className="text-brand-t500 animate-pulse" />
+                <h2 className="text-sm font-bold uppercase tracking-widest text-text-subtle">
+                    Destacados
+                </h2>
+             </div>
+             <div className="relative">
+                 <HeroFeature event={featuredEvents[currentSlide]} />
+                 {featuredEvents.length > 1 && (
+                     <>
+                        <button onClick={prevSlide} className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/60 text-white p-2 rounded-full backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100 z-20">
+                            <ChevronLeft size={24} />
+                        </button>
+                        <button onClick={nextSlide} className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/60 text-white p-2 rounded-full backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100 z-20">
+                            <ChevronRight size={24} />
+                        </button>
+                        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+                            {featuredEvents.map((_, idx) => (
+                                <button key={idx} onClick={() => setCurrentSlide(idx)} className={`w-2 h-2 rounded-full transition-all duration-300 ${currentSlide === idx ? 'bg-white w-6' : 'bg-white/40 hover:bg-white/70'}`} />
+                            ))}
+                        </div>
+                     </>
+                 )}
+             </div>
         </div>
       )}
 
-      {/* --- Contenido (Loading, Error, Grid) --- */}
+      {/* 2. SECCIÓN: HEADER Y FILTROS */}
+      <div className="flex flex-col md:flex-row justify-between items-end md:items-center mb-6 gap-4 border-b border-border-default pb-6">
+        <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-text-default flex items-center gap-2">
+               <TrendingUp className="text-action-primary" /> 
+               Explorar Catálogo
+            </h1>
+            <p className="text-text-subtle mt-1 text-sm">
+                Ordenado por proximidad: Lo que viene pronto, primero.
+            </p>
+        </div>
+        <button
+          onClick={() => setIsFiltersOpen(!isFiltersOpen)}
+          className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-full shadow-sm border transition-all ${isFiltersOpen ? 'bg-action-primary text-white border-transparent' : 'bg-white dark:bg-bg-muted text-text-default border-border-default hover:border-brand-t500'}`}
+        >
+          <SlidersHorizontal size={16} />
+          <span>Filtros Avanzados</span>
+        </button>
+      </div>
+
+      {/* 3. SECCIÓN: BUSCADOR */}
+      <div className="relative mb-8 group">
+        <input
+          type="text"
+          placeholder="Buscar en el catálogo... (Ej: Stranger Things)"
+          className="w-full pl-12 pr-4 py-3 text-base border border-border-default rounded-xl focus:ring-4 focus:ring-brand-t500/10 focus:border-brand-t500 focus:outline-none bg-white dark:bg-bg-muted text-text-default transition-all shadow-sm"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+        <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-subtle group-focus-within:text-brand-t500 transition-colors" />
+      </div>
+
+      {/* 4. SECCIÓN: PANEL DE FILTROS */}
+      <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isFiltersOpen ? 'max-h-96 opacity-100 mb-8' : 'max-h-0 opacity-0'}`}>
+        <div className="p-5 bg-white dark:bg-bg-muted shadow-sm rounded-xl border border-border-default grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase text-text-subtle tracking-wider">Plataforma</label>
+              <select className="w-full p-2.5 bg-bg-default dark:bg-bg-strong rounded-lg border-none focus:ring-2 focus:ring-brand-t500 text-text-default text-sm font-medium" value={selectedPlatform} onChange={(e) => setSelectedPlatform(e.target.value)}>
+                <option value="all">📺 Todas</option>
+                {availablePlatforms.map(p => <option key={p} value={p}>{p}</option>)}
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase text-text-subtle tracking-wider">Género</label>
+              <select className="w-full p-2.5 bg-bg-default dark:bg-bg-strong rounded-lg border-none focus:ring-2 focus:ring-brand-t500 text-text-default text-sm font-medium" value={selectedGenre} onChange={(e) => setSelectedGenre(e.target.value)}>
+                <option value="all">🎭 Todos</option>
+                {availableGenres.map(g => <option key={g} value={g}>{g}</option>)}
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase text-text-subtle tracking-wider">Fecha</label>
+              <select className="w-full p-2.5 bg-bg-default dark:bg-bg-strong rounded-lg border-none focus:ring-2 focus:ring-brand-t500 text-text-default text-sm font-medium" value={selectedDateFilter} onChange={(e) => setSelectedDateFilter(e.target.value)}>
+                <option value="all">📅 Inteligente</option>
+                <option value="upcoming">🚀 Solo Futuros</option>
+                <option value="this-week">Esta Semana</option>
+                <option value="today">Hoy</option>
+              </select>
+            </div>
+        </div>
+      </div>
+
       {loading && (
-        <div className="text-center py-10">
-          <p className="text-lg text-text-subtle">Cargando estrenos...</p>
+        <div className="flex flex-col items-center justify-center py-20 space-y-4">
+            <div className="w-10 h-10 border-4 border-brand-t500 border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-text-subtle font-medium animate-pulse">Organizando cartelera...</p>
         </div>
       )}
 
       {error && (
-        <div className="text-center py-10 bg-critical-subtle text-text-critical p-4 rounded-lg">
-          <p className="font-bold">Error</p>
+        <div className="text-center py-10 bg-critical-subtle/20 border border-critical-subtle text-text-critical p-6 rounded-2xl">
+          <p className="font-bold text-lg">Ups, algo salió mal</p>
           <p>{error}</p>
         </div>
       )}
 
+      {/* 5. SECCIÓN: GRID DE RESULTADOS (PAGINADO) */}
       {!loading && !error && filteredEvents.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-          {filteredEvents.map(item => (
-            <CountdownCard key={item.id} item={item} />
-          ))}
+        <div>
+            {selectedDateFilter === 'all' && (
+                <div className="mb-4 text-xs font-bold text-text-subtle uppercase tracking-wider opacity-70">
+                    Próximos Estrenos ↓
+                </div>
+            )}
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {currentEvents.map(item => (
+                <CountdownCard key={item.id} item={item} />
+            ))}
+            </div>
+
+            {/* --- COMPONENTE DE PAGINACIÓN --- */}
+            <Pagination 
+                currentPage={currentPage}
+                totalItems={filteredEvents.length}
+                itemsPerPage={itemsPerPage}
+                onPageChange={handlePageChange}
+            />
         </div>
       )}
 
       {!loading && !error && filteredEvents.length === 0 && (
-         <div className="text-center py-20 bg-white dark:bg-bg-muted rounded-lg shadow-md">
-          <h3 className="text-2xl font-bold text-text-default mb-2">Sin resultados</h3>
-          <p className="text-lg text-text-subtle">
-            {allEvents.length > 0
-              ? 'No se encontraron eventos que coincidan con tus filtros.'
-              : 'No hay próximos estrenos programados por el momento.'
-            }
+         <div className="text-center py-24 bg-bg-muted/30 rounded-3xl border-2 border-dashed border-border-default">
+          <div className="text-5xl mb-4 opacity-50">🔍</div>
+          <h3 className="text-xl font-bold text-text-default mb-2">No encontramos coincidencias</h3>
+          <p className="text-text-subtle max-w-sm mx-auto text-sm">
+            Prueba ajustando los filtros de plataforma o género.
           </p>
-          {(searchTerm || selectedGenre !== 'all' || selectedDateFilter !== 'all' || selectedPlatform !== 'all') && (
-            <button
-              onClick={() => {
-                setSearchTerm('');
-                setSelectedGenre('all');
-                setSelectedDateFilter('all');
-                setSelectedPlatform('all'); 
-              }}
-              className="mt-6 px-5 py-2 font-medium bg-action-primary text-text-on-accent rounded-lg shadow-md transition-transform duration-200 hover:scale-105"
-            >
-              Limpiar filtros
-            </button>
-          )}
+          <button onClick={() => { setSearchTerm(''); setSelectedGenre('all'); setSelectedPlatform('all'); }} className="mt-6 text-brand-t500 font-bold hover:underline text-sm">
+            Ver todo el catálogo
+          </button>
         </div>
       )}
     </div>

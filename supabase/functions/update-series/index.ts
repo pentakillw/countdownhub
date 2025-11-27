@@ -1,261 +1,255 @@
 // @deno-types="npm:@supabase/functions-js@2.0.0"
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-// @deno-types="npm:@supabase/supabase-js@2.0.0"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.0.0';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 import { corsHeaders } from '../_shared/cors.ts';
 
-// --- NUEVA INTERFAZ DE EVENTO ---
-interface Event {
-  title: string;
-  type: 'tv'; // Tipo TV
-  platform: string; // Dinámico
-  release_date: string;
-  image_url: string;
-  poster_image_url: string;
-  description: string;
-  source_api_id: string;
-  last_api_update: string;
-  genres: string[];
-  trailer_url: string | null; // ¡NUEVO CAMPO!
-}
+// --- CONFIGURACIÓN MÁXIMA ---
+const PAGES_TO_SCAN = 30; 
+const FUTURE_DAYS = 1460; 
+const LOOKBACK_DAYS = 90;
 
-interface TmdbSeries {
-  id: number;
-  name: string; // Las series usan 'name'
-  overview: string | null;
-  backdrop_path: string | null;
-  poster_path: string | null;
-  first_air_date: string; // Las series usan 'first_air_date'
-  genre_ids: number[];
-}
-
-const TOTAL_PAGES_TO_FETCH = 50;
-
-// --- INICIO DE NUEVAS FUNCIONES DE AYUDA ---
-
-/**
- * Obtiene el mapa de géneros de TV de TMDB.
- */
+// --- HELPERS ---
 async function getGenreMap(apiKey: string): Promise<Map<number, string>> {
-  const url = `https://api.themoviedb.org/3/genre/tv/list?api_key=${apiKey}&language=es-MX`;
-  const response = await fetch(url);
-  if (!response.ok) throw new Error('No se pudo obtener el mapa de géneros de TV');
-  const data = await response.json();
-  const genreMap = new Map<number, string>();
-  data.genres.forEach((genre: { id: number; name: string }) => {
-    genreMap.set(genre.id, genre.name);
-  });
-  return genreMap;
-}
-
-/**
- * Busca el mejor tráiler en los resultados de videos de TMDB.
- */
-function findBestTmdbTrailer(videos: any[]): string | null {
-  if (!videos || videos.length === 0) return null;
-  const trailers = videos.filter(v => v.site === 'YouTube' && v.type === 'Trailer');
-  const officialTrailer = trailers.find(v => v.official === true);
-  return officialTrailer?.key || trailers[0]?.key || null;
-}
-
-/**
- * Busca la plataforma de streaming para MX.
- */
-function findProvider(providers: any): string {
-  if (!providers || !providers.MX) return 'Por Anunciar';
-
-  const mx = providers.MX;
-
-  // 1. Prioridad: Plataformas de Streaming (flatrate)
-  if (mx.flatrate && mx.flatrate.length > 0) {
-    return mx.flatrate[0].provider_name;
-  }
-  // 2. Siguiente: Renta o Compra
-  if (mx.rent && mx.rent.length > 0) {
-    return mx.rent[0].provider_name;
-  }
-  if (mx.buy && mx.buy.length > 0) {
-    return mx.buy[0].provider_name;
-  }
-  
-  // 3. Default
-  return 'Por Anunciar';
-}
-
-/**
- * Fallback: Busca un tráiler en la API de YouTube si TMDB falla.
- */
-async function searchYouTubeTrailer(
-  query: string,
-  apiKey: string,
-): Promise<string | null> {
-  console.log(`Fallback de YouTube: Buscando "${query}"`);
-  const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&key=${apiKey}&type=video&maxResults=1`;
-  
   try {
-    const response = await fetch(url);
-    if (!response.ok) {
-      console.error("Error en API de YouTube:", await response.text());
-      return null;
+    const res = await fetch(`https://api.themoviedb.org/3/genre/tv/list?api_key=${apiKey}&language=es-MX`);
+    if (!res.ok) return new Map();
+    const data = await res.json();
+    const map = new Map<number, string>();
+    data.genres?.forEach((g: any) => map.set(g.id, g.name));
+    return map;
+  } catch { return new Map(); }
+}
+
+async function fetchWatchmodePlatforms(tmdbId: number, apiKey: string) {
+  if (!apiKey) return [];
+  try {
+    const res = await fetch(`https://api.watchmode.com/v1/title/tv-${tmdbId}/sources/?apiKey=${apiKey}&regions=MX`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    const platforms = new Set<string>();
+    if (Array.isArray(data)) {
+        data.forEach((s: any) => {
+            if (s.type === 'sub') {
+                let name = s.name;
+                if (name.includes('HBO') || name.includes('Max')) name = 'Max';
+                if (name.includes('Disney')) name = 'Disney+';
+                if (name.includes('Prime')) name = 'Prime Video';
+                if (name.includes('Netflix')) name = 'Netflix';
+                if (name.includes('Apple')) name = 'Apple TV+';
+                platforms.add(name);
+            }
+        });
     }
-    const data = await response.json();
-    const videoId = data.items?.[0]?.id?.videoId;
-    return videoId || null;
-  } catch (err) {
-    console.error("Error al contactar YouTube:", err);
-    return null;
-  }
+    return Array.from(platforms);
+  } catch { return []; }
 }
 
-// Funciones de fecha (sin cambios)
-function getTodayDateString(): string {
-  const today = new Date();
-  return today.toISOString().split('T')[0];
+async function fetchTmdbProviders(tmdbId: number, apiKey: string) {
+    try {
+        const res = await fetch(`https://api.themoviedb.org/3/tv/${tmdbId}/watch/providers?api_key=${apiKey}`);
+        const data = await res.json();
+        const mx = data.results?.MX;
+        if (!mx || !mx.flatrate) return [];
+        return mx.flatrate.map((p: any) => p.provider_name);
+    } catch { return []; }
 }
 
-function getFutureDateString(years: number): string {
-  const today = new Date();
-  today.setFullYear(today.getFullYear() + years);
-  return today.toISOString().split('T')[0];
-}
+async function fetchTrailer(tmdbId: number, apiKey: string, showName: string, youtubeKey?: string) {
+    let trailerUrl = null;
+    try {
+        const res = await fetch(`https://api.themoviedb.org/3/tv/${tmdbId}/videos?api_key=${apiKey}&language=es-MX`);
+        const data = await res.json();
+        const videos = data.results || [];
+        const official = videos.find((v: any) => v.site === 'YouTube' && v.type === 'Trailer' && v.official) 
+                      || videos.find((v: any) => v.site === 'YouTube' && v.type === 'Trailer');
 
-// --- FIN DE NUEVAS FUNCIONES DE AYUDA ---
+        if (official) {
+            trailerUrl = `https://www.youtube.com/watch?v=${official.key}`;
+        } else if (youtubeKey) {
+            const ytRes = await fetch(
+                `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(showName + " trailer subtitulado oficial")}&key=${youtubeKey}&type=video&maxResults=1`
+            );
+            const ytData = await ytRes.json();
+            if (ytData.items?.[0]) {
+                trailerUrl = `https://www.youtube.com/watch?v=${ytData.items[0].id.videoId}`;
+            }
+        }
+    } catch (e) { console.error("Error buscando trailer", e); }
+    return trailerUrl;
+}
 
 serve(async (req: Request): Promise<Response> => {
-  // Manejo de la solicitud pre-vuelo (CORS)
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
-  }
-
-  console.log(`Iniciando 'update-series' (Series) para ${TOTAL_PAGES_TO_FETCH} páginas...`);
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   try {
-    // 1. Obtener claves secretas (¡NUEVA CLAVE DE YOUTUBE!)
-    const TMDB_API_KEY = Deno.env.get('TMDB_API_KEY');
-    const YOUTUBE_API_KEY = Deno.env.get('YOUTUBE_API_KEY'); // ¡NUEVA!
-    const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    const TMDB_KEY = Deno.env.get('TMDB_API_KEY');
+    const WATCHMODE_KEY = Deno.env.get('WATCHMODE_API_KEY');
+    const YOUTUBE_KEY = Deno.env.get('YOUTUBE_API_KEY');
+    const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
+    const SUPABASE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
-    if (!TMDB_API_KEY || !supabaseUrl || !serviceRoleKey) {
-      throw new Error("Faltan variables de entorno de Supabase o TMDB.");
-    }
-    if (!YOUTUBE_API_KEY) {
-      console.warn("Advertencia: Falta YOUTUBE_API_KEY. El fallback de tráilers no funcionará.");
+    if (!TMDB_KEY || !SUPABASE_URL || !SUPABASE_KEY) {
+      throw new Error("Faltan claves de entorno.");
     }
 
-    // 2. Crear clientes
-    const supabaseClient = createClient(supabaseUrl, serviceRoleKey);
-    const genreMap = await getGenreMap(TMDB_API_KEY);
+    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: false } });
+    const genreMap = await getGenreMap(TMDB_KEY);
     
-    // 3. Lógica de fechas
-    const todayString = getTodayDateString();
-    const futureString = getFutureDateString(5);
-    console.log(`Buscando series entre ${todayString} y ${futureString}`);
-
-    let allEventsToUpsert: Event[] = [];
+    const today = new Date();
+    const pastDate = new Date();
+    pastDate.setDate(today.getDate() - LOOKBACK_DAYS);
+    const pastStr = pastDate.toISOString().split('T')[0];
     
-    // 4. Bucle principal de páginas
-    for (let page = 1; page <= TOTAL_PAGES_TO_FETCH; page++) {
-      console.log(`--- Obteniendo Página ${page} de Series ---`);
-      
-      const TMDB_URL = `https://api.themoviedb.org/3/discover/tv?api_key=${TMDB_API_KEY}&language=es-MX&region=MX&page=${page}&sort_by=first_air_date.asc&first_air_date.gte=${todayString}&first_air_date.lte=${futureString}`;
-      
-      const tmdbResponse = await fetch(TMDB_URL);
-      if (!tmdbResponse.ok) continue;
+    const futureDate = new Date();
+    futureDate.setDate(today.getDate() + FUTURE_DAYS);
+    const futureStr = futureDate.toISOString().split('T')[0];
 
-      const tmdbData = await tmdbResponse.json();
-      const series: TmdbSeries[] = tmdbData.results;
-      console.log(`Página ${page} trajo ${series.length} series.`);
+    let allSeriesToProcess = [];
 
-      // --- ¡NUEVO! Bucle Concurrente para Detalles ---
-      const detailPromises = series.map(async (serie) => {
-        try {
-          const [videosRes, providersRes] = await Promise.all([
-            fetch(`https://api.themoviedb.org/3/tv/${serie.id}/videos?api_key=${TMDB_API_KEY}&language=es-MX,en-US`),
-            fetch(`https://api.themoviedb.org/3/tv/${serie.id}/watch/providers?api_key=${TMDB_API_KEY}`)
-          ]);
-
-          if (!videosRes.ok || !providersRes.ok) return null;
-
-          const videosData = await videosRes.json();
-          const providersData = await providersRes.json();
-
-          // Lógica de Tráiler
-          let trailerKey = findBestTmdbTrailer(videosData.results);
-          if (!trailerKey && YOUTUBE_API_KEY) {
-            trailerKey = await searchYouTubeTrailer(
-              `${serie.name} trailer oficial`,
-              YOUTUBE_API_KEY
-            );
-          }
-          const trailerUrl = trailerKey ? `https://www.youtube.com/watch?v=${trailerKey}` : null;
-
-          // Lógica de Plataforma
-          const platform = findProvider(providersData.results);
-          
-          // --- Construir el objeto Evento ---
-          const imageUrl = serie.backdrop_path ? `https://image.tmdb.org/t/p/w500${serie.backdrop_path}` : null;
-          const posterUrl = serie.poster_path ? `https://image.tmdb.org/t/p/w500${serie.poster_path}` : null;
-
-          if (!imageUrl || !posterUrl || !serie.first_air_date) return null;
-
-          const genres = serie.genre_ids
-            .map((id) => genreMap.get(id))
-            .filter((name): name is string => name !== undefined);
-
-          return {
-            title: serie.name, // 'name' para series
-            type: 'tv' as const,
-            platform: platform, // ¡Dinámico!
-            release_date: `${serie.first_air_date}T12:00:00Z`, // 'first_air_date'
-            image_url: imageUrl,
-            poster_image_url: posterUrl,
-            description: serie.overview || 'Sinopsis no disponible por el momento.',
-            source_api_id: `tv-${serie.id}`,
-            last_api_update: new Date().toISOString(),
-            genres: genres,
-            trailer_url: trailerUrl, // ¡Nuevo!
-          };
-        } catch (err) {
-          console.error(`Error procesando serie ${serie.id}:`, err);
-          return null;
+    // --- ESTRATEGIA DUAL ---
+    for (let i = 1; i <= 5; i++) {
+        const url = `https://api.themoviedb.org/3/discover/tv?api_key=${TMDB_KEY}&language=es-MX&region=MX&sort_by=popularity.desc&air_date.gte=${pastStr}&air_date.lte=${futureStr}&page=${i}`;
+        const res = await fetch(url);
+        if (res.ok) {
+            const data = await res.json();
+            allSeriesToProcess.push(...data.results);
         }
-      });
+    }
 
-      const eventsFromPage = (await Promise.all(detailPromises))
-        .filter((event): event is Event => event !== null);
+    for (let i = 1; i <= 25; i++) {
+        const url = `https://api.themoviedb.org/3/discover/tv?api_key=${TMDB_KEY}&language=es-MX&sort_by=popularity.desc&page=${i}`;
+        const res = await fetch(url);
+        if (res.ok) {
+            const data = await res.json();
+            allSeriesToProcess.push(...data.results);
+        }
+    }
+
+    const uniqueSeries = Array.from(new Map(allSeriesToProcess.map(item => [item.id, item])).values());
+    console.log(`Procesando ${uniqueSeries.length} series únicas...`);
+
+    const eventsToUpsert = [];
+    const CHUNK_SIZE = 15;
+
+    for (let i = 0; i < uniqueSeries.length; i += CHUNK_SIZE) {
+        const chunk = uniqueSeries.slice(i, i + CHUNK_SIZE);
         
-      allEventsToUpsert.push(...eventsFromPage);
+        const promises = chunk.map(async (serie: any) => {
+            try {
+                if (!serie.poster_path && !serie.backdrop_path) return null;
+
+                // ¡MEJORA AQUÍ! Agregamos 'aggregate_credits' para obtener el reparto completo de la serie
+                const detailsRes = await fetch(`https://api.themoviedb.org/3/tv/${serie.id}?api_key=${TMDB_KEY}&language=es-MX&append_to_response=aggregate_credits,videos`);
+                const details = await detailsRes.json();
+
+                const lastEp = details.last_episode_to_air;
+                const nextEp = details.next_episode_to_air;
+                
+                let finalReleaseDate = null;
+                let status = 'Próximamente';
+
+                // --- LÓGICA DE ESTADOS ---
+                if (nextEp) {
+                    finalReleaseDate = nextEp.air_date;
+                    if (lastEp && new Date(lastEp.air_date) >= pastDate) {
+                        status = 'Parte 2 en Camino';
+                    } else {
+                        status = 'Próximamente';
+                    }
+                } else if (lastEp && new Date(lastEp.air_date) >= pastDate) {
+                    finalReleaseDate = lastEp.air_date;
+                    status = 'Nuevos Episodios';
+                } else if (details.in_production) {
+                    if (serie.first_air_date) {
+                        const firstAir = new Date(serie.first_air_date);
+                        if (firstAir > today) {
+                            finalReleaseDate = serie.first_air_date;
+                            status = 'En Producción';
+                        } else {
+                            const provisionalYear = today.getFullYear() + (today.getMonth() > 9 ? 1 : 0);
+                            finalReleaseDate = `${provisionalYear}-12-31`;
+                            status = 'Temporada Anunciada';
+                        }
+                    } else {
+                        finalReleaseDate = `${today.getFullYear() + 1}-01-01`; 
+                        status = 'Muy Pronto';
+                    }
+                }
+
+                if (!finalReleaseDate && serie.popularity < 20) return null;
+                if (!finalReleaseDate) finalReleaseDate = futureStr;
+                if (new Date(finalReleaseDate) < pastDate && !['Nuevos Episodios', 'Parte 2 en Camino'].includes(status)) return null;
+
+                // --- EXTRAER REPARTO (CAST) ---
+                // Tomamos los top 12 actores
+                const cast = details.aggregate_credits?.cast?.slice(0, 12).map((c: any) => ({
+                    id: c.id,
+                    name: c.name,
+                    character: c.roles?.[0]?.character || 'Personaje',
+                    profile_path: c.profile_path ? `https://image.tmdb.org/t/p/w185${c.profile_path}` : null
+                })) || [];
+
+                const creator = details.created_by?.length > 0 ? details.created_by[0].name : null;
+
+                // Plataformas
+                let platforms = await fetchWatchmodePlatforms(serie.id, WATCHMODE_KEY || '');
+                if (platforms.length === 0) {
+                    platforms = await fetchTmdbProviders(serie.id, TMDB_KEY);
+                }
+
+                let platformStr = "Por Anunciar";
+                if (platforms.length > 0) {
+                    const priority = ['Netflix', 'Max', 'Disney+', 'Prime Video', 'Apple TV+', 'Paramount+'];
+                    const best = priority.find(p => platforms.some(pf => pf.includes(p)));
+                    platformStr = best || platforms[0];
+                } else if (details.networks && details.networks.length > 0) {
+                    platformStr = details.networks[0].name;
+                }
+
+                const trailer = await fetchTrailer(serie.id, TMDB_KEY, serie.name, YOUTUBE_KEY);
+                const genres = serie.genre_ids.map((id: number) => genreMap.get(id)).filter(Boolean);
+
+                return {
+                    source_api_id: `tv-${serie.id}`,
+                    title: serie.name,
+                    type: 'tv',
+                    platform: platformStr,
+                    release_date: finalReleaseDate, 
+                    status: status,
+                    description: serie.overview || 'Sinopsis no disponible.',
+                    genres: genres,
+                    rating: serie.vote_average ? serie.vote_average.toFixed(1) : null,
+                    popularity: serie.popularity,
+                    image_url: serie.backdrop_path ? `https://image.tmdb.org/t/p/original${serie.backdrop_path}` : null,
+                    poster_image_url: serie.poster_path ? `https://image.tmdb.org/t/p/w500${serie.poster_path}` : null,
+                    trailer_url: trailer,
+                    last_api_update: new Date(),
+                    slug: serie.name.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, ''),
+                    original_title: serie.original_name,
+                    // ¡NUEVOS CAMPOS!
+                    cast_detailed: cast,
+                    director: creator // Usamos el campo director para guardar al creador en series
+                };
+            } catch (e) {
+                return null;
+            }
+        });
+
+        const results = await Promise.all(promises);
+        eventsToUpsert.push(...results.filter(r => r !== null));
     }
 
-    // 5. De-duplicar y Guardar en Supabase
-    console.log(`Total (antes de duplicados): ${allEventsToUpsert.length}`);
-    const uniqueEventsMap = new Map();
-    allEventsToUpsert.forEach(event => {
-      uniqueEventsMap.set(event.source_api_id, event);
-    });
-    const uniqueEventsToUpsert = Array.from(uniqueEventsMap.values());
-    
-    console.log(`Total ÚNICOS para insertar/actualizar: ${uniqueEventsToUpsert.length}`);
-
-    if (uniqueEventsToUpsert.length === 0) {
-      return new Response(JSON.stringify({ success: true, message: "No hay eventos nuevos." }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
+    if (eventsToUpsert.length > 0) {
+        const { error } = await supabase.from('events').upsert(eventsToUpsert, { onConflict: 'source_api_id' });
+        if (error) throw error;
     }
-    
-    const { error: upsertError } = await supabaseClient
-      .from('events')
-      .upsert(uniqueEventsToUpsert, {
-        onConflict: 'source_api_id',
-        ignoreDuplicates: false,
-      });
 
-    if (upsertError) throw upsertError;
+    return new Response(JSON.stringify({ 
+        success: true, 
+        message: `Base de datos actualizada con ${eventsToUpsert.length} series (incluye Reparto).`
+    }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
-    console.log(`¡Éxito! ${uniqueEventsToUpsert.length} series actualizadas.`);
-    return new Response(JSON.stringify({ success: true, message: `${uniqueEventsToUpsert.length} series actualizadas.` }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
-
-  } catch (error) {
-    console.error('Error en la función:', error.message, error);
-    return new Response(JSON.stringify({ error: error.message }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 });
+  } catch (err: any) {
+    return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 });

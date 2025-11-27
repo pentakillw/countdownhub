@@ -1,11 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient.js';
 import CountdownCard from '../components/CountdownCard.jsx';
-import { Search, Filter, SlidersHorizontal } from 'lucide-react';
+import Pagination from '../components/Pagination.jsx';
+import HeroFeature from '../components/HeroFeature.jsx';
+import SkeletonCard from '../components/SkeletonCard.jsx'; // ¡Importante: Importamos el Skeleton!
+import { Search, Filter, SlidersHorizontal, ChevronLeft, ChevronRight, Sparkles, Film } from 'lucide-react';
 
 function MoviesPage() {
   const [allEvents, setAllEvents] = useState([]);
   const [filteredEvents, setFilteredEvents] = useState([]);
+  const [featuredEvents, setFeaturedEvents] = useState([]); 
+  const [currentSlide, setCurrentSlide] = useState(0);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedGenre, setSelectedGenre] = useState('all');
   const [selectedDateFilter, setSelectedDateFilter] = useState('all');
@@ -16,24 +22,71 @@ function MoviesPage() {
   const [error, setError] = useState(null);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
 
-  // Efecto 1: Cargar Datos (SOLO PELÍCULAS)
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 12;
+
+  const sortSmartCatalog = (events) => {
+      const now = new Date();
+      now.setHours(0,0,0,0);
+      const upcoming = [];
+      const past = [];
+      
+      events.forEach(event => {
+          const rDate = new Date(event.release_date);
+          rDate.setHours(0,0,0,0);
+          if (rDate >= now) upcoming.push(event);
+          else past.push(event);
+      });
+
+      upcoming.sort((a, b) => new Date(a.release_date) - new Date(b.release_date));
+      past.sort((a, b) => new Date(b.release_date) - new Date(a.release_date));
+
+      return [...upcoming, ...past];
+  };
+
   useEffect(() => {
     const fetchEvents = async () => {
       setLoading(true);
       setError(null);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const todayISO = today.toISOString();
+      
+      const recentPast = new Date();
+      recentPast.setDate(recentPast.getDate() - 60); 
+      const recentPastISO = recentPast.toISOString();
+
       try {
         const { data, error } = await supabase
           .from('events')
           .select('*')
-          .eq('type', 'movie') // <-- Solo Películas
-          .gte('release_date', todayISO)
-          .order('release_date', { ascending: true });
+          .eq('type', 'movie')
+          .gte('release_date', recentPastISO);
+        
         if (error) throw error;
-        setAllEvents(data);
-        setFilteredEvents(data);
+
+        if (data && data.length > 0) {
+            const now = new Date();
+            now.setHours(0,0,0,0);
+
+            const upcomingEvents = data.filter(e => new Date(e.release_date) >= now);
+            const releasedEvents = data.filter(e => new Date(e.release_date) < now);
+
+            upcomingEvents.sort((a, b) => b.popularity - a.popularity);
+            releasedEvents.sort((a, b) => b.popularity - a.popularity);
+
+            let heroSelection = [...upcomingEvents].slice(0, 5);
+            if (heroSelection.length < 5) {
+                const needed = 5 - heroSelection.length;
+                heroSelection = [...heroSelection, ...releasedEvents.slice(0, needed)];
+            }
+            setFeaturedEvents(heroSelection);
+
+            const sortedCatalog = sortSmartCatalog(data);
+            setAllEvents(sortedCatalog);
+            setFilteredEvents(sortedCatalog);
+        } else {
+            setAllEvents([]);
+            setFilteredEvents([]);
+        }
+
       } catch (err) {
         console.error("Error al cargar películas:", err);
         setError("No se pudieron cargar las películas. Intenta de nuevo más tarde.");
@@ -44,7 +97,14 @@ function MoviesPage() {
     fetchEvents();
   }, []);
 
-  // Efecto 2: Generar Filtros
+  useEffect(() => {
+    if (featuredEvents.length <= 1) return;
+    const interval = setInterval(() => {
+        setCurrentSlide((prev) => (prev + 1) % featuredEvents.length);
+    }, 6000); 
+    return () => clearInterval(interval);
+  }, [featuredEvents]);
+
   useEffect(() => {
     if (allEvents.length === 0) return;
     const allGenresLists = allEvents.map(event => event.genres).filter(Boolean); 
@@ -58,9 +118,9 @@ function MoviesPage() {
     setAvailablePlatforms(uniquePlatforms);
   }, [allEvents]);
 
-  // Efecto 3: Aplicar Filtros
   useEffect(() => {
     let processedEvents = [...allEvents];
+    
     if (searchTerm.trim() !== '') {
       const lowerCaseSearch = searchTerm.toLowerCase();
       processedEvents = processedEvents.filter(event => 
@@ -72,6 +132,12 @@ function MoviesPage() {
         event.genres && event.genres.includes(selectedGenre)
       );
     }
+    if (selectedPlatform !== 'all') {
+      processedEvents = processedEvents.filter(event => 
+        event.platform === selectedPlatform
+      );
+    }
+
     if (selectedDateFilter !== 'all') {
       const now = new Date();
       now.setHours(0, 0, 0, 0);
@@ -89,72 +155,97 @@ function MoviesPage() {
           const eventDate = new Date(event.release_date);
           return eventDate >= now && eventDate <= endOfWeek;
         });
-      } else if (selectedDateFilter === 'this-month') {
-        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-        endOfMonth.setHours(23, 59, 59, 999);
-        processedEvents = processedEvents.filter(event => {
-          const eventDate = new Date(event.release_date);
-          return eventDate >= now && eventDate <= endOfMonth;
-        });
+      } else if (selectedDateFilter === 'upcoming') {
+          processedEvents = processedEvents.filter(event => new Date(event.release_date) >= now);
+          processedEvents.sort((a,b) => new Date(a.release_date) - new Date(b.release_date));
       }
+    } else {
+        processedEvents = sortSmartCatalog(processedEvents);
     }
-    if (selectedPlatform !== 'all') {
-      processedEvents = processedEvents.filter(event => 
-        event.platform === selectedPlatform
-      );
-    }
+
     setFilteredEvents(processedEvents);
+    setCurrentPage(1); 
   }, [searchTerm, selectedGenre, selectedDateFilter, selectedPlatform, allEvents]);
+
+  const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % featuredEvents.length);
+  const prevSlide = () => setCurrentSlide((prev) => (prev - 1 + featuredEvents.length) % featuredEvents.length);
+
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentEvents = filteredEvents.slice(indexOfFirstItem, indexOfLastItem);
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+    window.scrollTo({ top: 600, behavior: 'smooth' });
+  };
 
   return (
     <div>
-      {/* --- Título y Botón de Filtros --- */}
+      {/* 1. SECCIÓN: HERO CARRUSEL */}
+      {!loading && !error && !searchTerm && featuredEvents.length > 0 && (
+        <div className="mb-12 relative group">
+             <div className="flex items-center gap-2 mb-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                <Film className="text-action-primary animate-bounce" />
+                <h2 className="text-sm font-bold uppercase tracking-widest text-text-subtle">
+                    Películas Destacadas
+                </h2>
+             </div>
+             <div className="relative">
+                 <HeroFeature event={featuredEvents[currentSlide]} />
+                 {featuredEvents.length > 1 && (
+                     <>
+                        <button onClick={prevSlide} className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/60 text-white p-2 rounded-full backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100 z-20">
+                            <ChevronLeft size={24} />
+                        </button>
+                        <button onClick={nextSlide} className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/60 text-white p-2 rounded-full backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100 z-20">
+                            <ChevronRight size={24} />
+                        </button>
+                        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+                            {featuredEvents.map((_, idx) => (
+                                <button key={idx} onClick={() => setCurrentSlide(idx)} className={`w-2 h-2 rounded-full transition-all duration-300 ${currentSlide === idx ? 'bg-white w-6' : 'bg-white/40 hover:bg-white/70'}`} />
+                            ))}
+                        </div>
+                     </>
+                 )}
+             </div>
+        </div>
+      )}
+
+      {/* 2. HEADER Y FILTROS */}
       <div className="flex justify-between items-center mb-4">
-        {/* --- ¡CORRECCIÓN! Ahora 'text-text-default' funcionará --- */}
-        <h1 className="text-3xl md:text-4xl font-bold text-text-default">
-          Películas
+        <h1 className="text-3xl md:text-4xl font-bold text-text-default flex items-center gap-2">
+          <Sparkles className="text-yellow-500" />
+          Cartelera de Cine
         </h1>
         <button
           onClick={() => setIsFiltersOpen(!isFiltersOpen)}
-          // --- ¡CORRECCIÓN! 'bg-white dark:bg-bg-muted' funcionará ---
           className="flex items-center gap-2 px-4 py-2 font-medium bg-white dark:bg-bg-muted text-text-subtle rounded-lg shadow-sm border border-border-default hover:bg-bg-muted hover:text-text-default transition-colors"
-          aria-label="Mostrar/Ocultar filtros"
         >
           <SlidersHorizontal size={20} />
           <span className="hidden sm:inline">Filtros</span>
         </button>
       </div>
 
-      {/* --- Barra de Búsqueda Visible --- */}
       <div className="relative mb-6">
-        <label htmlFor="search-movies" className="sr-only">Buscar por título</label>
         <input
           type="text"
-          id="search-movies"
-          placeholder="Buscar por título... (Ej: Beetlejuice 2)"
-          // --- ¡CORRECCIÓN! 'bg-white dark:bg-bg-muted' funcionará ---
-          className="w-full pl-10 pr-4 py-3 border border-border-default rounded-lg focus:ring-2 focus:ring-action-primary focus:outline-none bg-white dark:bg-bg-muted"
+          placeholder="Buscar películas... (Ej: Gladiator II)"
+          className="w-full pl-10 pr-4 py-3 border border-border-default rounded-lg focus:ring-2 focus:ring-action-primary focus:outline-none bg-white dark:bg-bg-muted text-text-default"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
         <Search size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-subtle" />
       </div>
 
-      {/* --- Filtros Desplegables (Sin la búsqueda) --- */}
       {isFiltersOpen && (
-        // --- ¡CORRECCIÓN! 'bg-white dark:bg-bg-muted' funcionará ---
         <div className="mb-8 p-4 bg-white dark:bg-bg-muted shadow-md rounded-lg filters-slide-down">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            
             <div className="relative">
-              <label htmlFor="genre-movies" className="block text-sm font-medium text-text-subtle mb-1">Género</label>
+              <label className="block text-sm font-medium text-text-subtle mb-1">Género</label>
               <select
-                id="genre-movies"
-                // --- ¡CORRECCIÓN! 'bg-white dark:bg-bg-default' funcionará ---
-                className="w-full pl-10 pr-4 py-2 border border-border-default rounded-lg appearance-none focus:ring-2 focus:ring-action-primary focus:outline-none bg-white dark:bg-bg-default"
+                className="w-full pl-10 pr-4 py-2 border border-border-default rounded-lg appearance-none focus:ring-2 focus:ring-action-primary focus:outline-none bg-white dark:bg-bg-default text-text-default"
                 value={selectedGenre}
                 onChange={(e) => setSelectedGenre(e.target.value)}
-                disabled={availableGenres.length === 0}
               >
                 <option value="all">Todos los géneros</option>
                 {availableGenres.map(genre => (
@@ -163,50 +254,44 @@ function MoviesPage() {
               </select>
               <Filter size={20} className="absolute left-3 top-9 text-text-subtle" />
             </div>
-            
             <div className="relative">
-              <label htmlFor="date-movies" className="block text-sm font-medium text-text-subtle mb-1">Fecha de estreno</label>
+              <label className="block text-sm font-medium text-text-subtle mb-1">Fecha</label>
               <select
-                id="date-movies"
-                // --- ¡CORRECCIÓN! 'bg-white dark:bg-bg-default' funcionará ---
-                className="w-full pl-10 pr-4 py-2 border border-border-default rounded-lg appearance-none focus:ring-2 focus:ring-action-primary focus:outline-none bg-white dark:bg-bg-default"
+                className="w-full pl-10 pr-4 py-2 border border-border-default rounded-lg appearance-none focus:ring-2 focus:ring-action-primary focus:outline-none bg-white dark:bg-bg-default text-text-default"
                 value={selectedDateFilter}
                 onChange={(e) => setSelectedDateFilter(e.target.value)}
               >
-                <option value="all">Cualquier fecha</option>
+                <option value="all">📅 Inteligente (Recomendado)</option>
+                <option value="upcoming">🚀 Próximamente</option>
                 <option value="today">Hoy</option>
-                <option value="this-week">Esta Semana</option>
-                <option value="this-month">Este Mes</option>
               </select>
               <Filter size={20} className="absolute left-3 top-9 text-text-subtle" />
             </div>
-
             <div className="relative">
-              <label htmlFor="platform-movies" className="block text-sm font-medium text-text-subtle mb-1">Plataforma</label>
+              <label className="block text-sm font-medium text-text-subtle mb-1">Plataforma</label>
               <select
-                id="platform-movies"
-                // --- ¡CORRECCIÓN! 'bg-white dark:bg-bg-default' funcionará ---
-                className="w-full pl-10 pr-4 py-2 border border-border-default rounded-lg appearance-none focus:ring-2 focus:ring-action-primary focus:outline-none bg-white dark:bg-bg-default"
+                className="w-full pl-10 pr-4 py-2 border border-border-default rounded-lg appearance-none focus:ring-2 focus:ring-action-primary focus:outline-none bg-white dark:bg-bg-default text-text-default"
                 value={selectedPlatform}
                 onChange={(e) => setSelectedPlatform(e.target.value)}
-                disabled={availablePlatforms.length === 0} 
               >
-                <option value="all">Todas las plataformas</option>
+                <option value="all">Todas</option>
                 {availablePlatforms.map(platform => (
                   <option key={platform} value={platform}>{platform}</option>
                 ))}
               </select>
               <Filter size={20} className="absolute left-3 top-9 text-text-subtle" />
             </div>
-
           </div>
         </div>
       )}
 
-      {/* --- Contenido (Loading, Error, Grid) --- */}
+      {/* --- ESTADO DE CARGA MEJORADO CON SKELETONS --- */}
       {loading && (
-        <div className="text-center py-10">
-          <p className="text-lg text-text-subtle">Cargando películas...</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 mt-8">
+           {/* Generamos 6 tarjetas vacías (skeletons) */}
+           {[...Array(6)].map((_, index) => (
+              <SkeletonCard key={index} />
+           ))}
         </div>
       )}
 
@@ -218,35 +303,38 @@ function MoviesPage() {
       )}
 
       {!loading && !error && filteredEvents.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-          {filteredEvents.map(item => (
-            <CountdownCard key={item.id} item={item} />
-          ))}
+        <div>
+            {selectedDateFilter === 'all' && (
+                <div className="mb-4 text-xs font-bold text-text-subtle uppercase tracking-wider opacity-70 border-b border-border-default pb-2">
+                    Próximos Estrenos ↓
+                </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+            {currentEvents.map(item => (
+                <CountdownCard key={item.id} item={item} />
+            ))}
+            </div>
+            
+            <Pagination 
+                currentPage={currentPage}
+                totalItems={filteredEvents.length}
+                itemsPerPage={itemsPerPage}
+                onPageChange={handlePageChange}
+            />
         </div>
       )}
 
       {!loading && !error && filteredEvents.length === 0 && (
          <div className="text-center py-20 bg-white dark:bg-bg-muted rounded-lg shadow-md">
           <h3 className="text-2xl font-bold text-text-default mb-2">Sin resultados</h3>
-          <p className="text-lg text-text-subtle">
-            {allEvents.length > 0
-              ? 'No se encontraron películas que coincidan con tus filtros.'
-              : 'No hay próximas películas programadas por el momento.'
-            }
-          </p>
-          {(searchTerm || selectedGenre !== 'all' || selectedDateFilter !== 'all' || selectedPlatform !== 'all') && (
-            <button
-              onClick={() => {
-                setSearchTerm('');
-                setSelectedGenre('all');
-                setSelectedDateFilter('all');
-                setSelectedPlatform('all'); 
-              }}
-              className="mt-6 px-5 py-2 font-medium bg-action-primary text-text-on-accent rounded-lg shadow-md transition-transform duration-200 hover:scale-105"
-            >
-              Limpiar filtros
-            </button>
-          )}
+          <p className="text-lg text-text-subtle">No hay películas con estos filtros.</p>
+          <button
+            onClick={() => { setSearchTerm(''); setSelectedGenre('all'); setSelectedDateFilter('all'); setSelectedPlatform('all'); }}
+            className="mt-6 px-5 py-2 font-medium bg-action-primary text-text-on-accent rounded-lg shadow-md transition-transform duration-200 hover:scale-105"
+          >
+            Limpiar filtros
+          </button>
         </div>
       )}
     </div>

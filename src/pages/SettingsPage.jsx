@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
-import { Bell, AlertTriangle } from 'lucide-react';
+import { Bell, AlertTriangle, User, Mail, Shield } from 'lucide-react';
 
 function SettingsPage() {
   const { user } = useAuth();
@@ -11,114 +11,97 @@ function SettingsPage() {
   const handleToggleNotifications = async (e) => {
     const isEnabled = e.target.checked;
     setLoading(true);
-    setError(null);
-    
-    if (isEnabled) {
-      // --- Lógica para SUSCRIBIRSE ---
-      // (En un futuro, aquí llamaremos al service worker)
-      console.log('Intentando activar notificaciones...');
-      try {
-        // 1. Pedir permiso
-        const permission = await Notification.requestPermission();
-        if (permission !== 'granted') {
-          throw new Error('Permiso de notificaciones denegado por el usuario.');
-        }
-        
-        // 2. (Simulación) Obtener suscripción (esto es más complejo en la vida real)
-        console.log('Permiso concedido. (Simulación de suscripción...)');
-        // Aquí iría la lógica para registrar el 'service worker' y
-        // obtener el 'pushManager.subscribe()'
-        
-        // 3. (Simulación) Guardar en Supabase
-        // const { error: dbError } = await supabase.from('push_subscriptions').insert({ ... });
-        
-        setNotificationsEnabled(true);
-      } catch (err) {
-        console.error(err);
-        setError(err.message);
-        setNotificationsEnabled(false);
-      }
-    } else {
-      // --- Lógica para DESUSCRIBIRSE ---
-      console.log('Desactivando notificaciones...');
-      // (Simulación) Aquí borraríamos la suscripción de Supabase
-      setNotificationsEnabled(false);
-    }
-    
-    setLoading(false);
+    // Simulación de delay
+    setTimeout(() => {
+        setNotificationsEnabled(isEnabled);
+        setLoading(false);
+    }, 500);
   };
 
   return (
-    <div>
-      {/* --- ¡CORRECCIÓN! 'text-text-default' funcionará --- */}
+    <div className="max-w-3xl mx-auto">
       <h1 className="text-3xl md:text-4xl font-bold text-text-default mb-8">
         Configuración
       </h1>
 
-      {/* --- ¡CORRECCIÓN! 'bg-white dark:bg-bg-muted' funcionará --- */}
-      <div className="max-w-2xl mx-auto bg-white dark:bg-bg-muted p-8 rounded-lg shadow-md">
-        <h2 className="text-2xl font-bold text-text-default mb-6">
-          Notificaciones
+      {/* --- SECCIÓN 1: PERFIL (MEJORA VISUAL) --- */}
+      <div className="bg-white dark:bg-bg-muted rounded-2xl shadow-sm border border-border-default p-6 mb-8">
+        <h2 className="text-xl font-bold text-text-default mb-6 flex items-center gap-2">
+            <User className="text-action-primary" size={24} />
+            Mi Perfil
+        </h2>
+        
+        <div className="flex items-center gap-6">
+            <div className="w-20 h-20 rounded-full bg-brand-t100 dark:bg-brand-t900 flex items-center justify-center text-action-primary font-bold text-3xl">
+                {user?.email?.charAt(0).toUpperCase() || 'U'}
+            </div>
+            
+            <div className="flex-grow">
+                <div className="mb-1">
+                    <label className="text-xs font-bold text-text-subtle uppercase tracking-wider">Correo Electrónico</label>
+                    <div className="flex items-center gap-2 text-text-default font-medium mt-1">
+                        <Mail size={16} className="text-text-subtle" />
+                        {user?.email || 'No conectado'}
+                    </div>
+                </div>
+                <div className="mt-4">
+                    <label className="text-xs font-bold text-text-subtle uppercase tracking-wider">ID de Usuario</label>
+                    <div className="flex items-center gap-2 text-text-subtle text-sm mt-1 font-mono bg-bg-default p-2 rounded w-full md:w-auto truncate">
+                        <Shield size={14} />
+                        {user?.id || '---'}
+                    </div>
+                </div>
+            </div>
+        </div>
+      </div>
+
+      {/* --- SECCIÓN 2: NOTIFICACIONES --- */}
+      <div className="bg-white dark:bg-bg-muted rounded-2xl shadow-sm border border-border-default p-6">
+        <h2 className="text-xl font-bold text-text-default mb-6 flex items-center gap-2">
+            <Bell className="text-action-primary" size={24} />
+            Preferencias
         </h2>
         
         {error && (
           <div className="bg-critical-subtle border-l-4 border-border-critical-strong text-text-critical p-4 mb-4" role="alert">
-            <p className="font-bold">Error</p>
             <p>{error}</p>
           </div>
         )}
 
-        <div className="flex items-center justify-between">
-          <label htmlFor="notifications" className="flex flex-col pr-4">
-            <span className="font-medium text-text-default">Activar Notificaciones Push</span>
+        <div className="flex items-center justify-between py-2">
+          <div className="pr-4">
+            <span className="block font-medium text-text-default">Notificaciones Push</span>
             <span className="text-sm text-text-subtle">
-              Recibe un aviso cuando un estreno de "Mi Lista" esté por llegar.
+              Recibe alertas cuando se estrenen tus favoritos.
             </span>
-          </label>
+          </div>
           
-          {/* Toggle Switch (usando un checkbox estilizado) */}
-          <div className="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
+          <div className="relative inline-block w-12 mr-2 align-middle select-none">
             <input
               type="checkbox"
-              name="notifications"
               id="notifications"
               checked={notificationsEnabled}
               onChange={handleToggleNotifications}
               disabled={loading}
-              // --- ¡CORRECCIÓN! 'bg-white' es correcto para el círculo ---
-              className="toggle-checkbox absolute block w-7 h-7 rounded-full bg-white border-4 appearance-none cursor-pointer"
+              className="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer transition-all duration-300"
+              style={{ 
+                  right: notificationsEnabled ? '0' : 'auto', 
+                  left: notificationsEnabled ? 'auto' : '0',
+                  borderColor: notificationsEnabled ? '#23C764' : '#e5e7eb'
+              }}
             />
             <label
               htmlFor="notifications"
-              // --- ¡CORRECCIÓN! 'bg-bg-subtle' funcionará ---
-              className="toggle-label block overflow-hidden h-7 rounded-full bg-bg-subtle cursor-pointer"
+              className={`toggle-label block overflow-hidden h-6 rounded-full cursor-pointer transition-colors duration-300 ${notificationsEnabled ? 'bg-deco-verde-1' : 'bg-gray-300 dark:bg-gray-700'}`}
             ></label>
           </div>
         </div>
         
-        {/* Estilos para el Toggle (pueden ir en index.css) */}
-        <style>{`
-          .toggle-checkbox:checked {
-            right: 0;
-            border-color: #23C764; /* deco-verde-1 */
-          }
-          .toggle-checkbox:checked + .toggle-label {
-            background-color: #23C764; /* deco-verde-1 */
-          }
-        `}</style>
-        
-        {loading && (
-          <p className="text-sm text-text-subtle mt-4">Actualizando...</p>
-        )}
-        
-        {/* --- ¡CORRECCIÓN! 'bg-bg-muted dark:bg-bg-subtle' funcionará --- */}
-        <div className="mt-6 p-4 bg-bg-muted dark:bg-bg-subtle rounded-lg">
-          <div className="flex">
-            <AlertTriangle size={20} className="text-text-subtle mr-3 flex-shrink-0" />
+        <div className="mt-6 p-4 bg-info-subtle/20 border border-info-subtle rounded-xl flex gap-3">
+            <AlertTriangle size={20} className="text-text-info flex-shrink-0 mt-0.5" />
             <p className="text-sm text-text-subtle">
-              Esta función es experimental. Las notificaciones Push requieren un Service Worker y configuración HTTPS en producción que no están implementados en este prototipo.
+              <strong>Nota:</strong> Las notificaciones reales requieren permisos del navegador que se solicitarán cuando la función salga de fase beta.
             </p>
-          </div>
         </div>
 
       </div>
